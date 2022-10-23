@@ -1,18 +1,19 @@
 drop table ForAndIf.Canal
 drop table ForAndIf.Cliente
+drop table ForAndIf.Descuento_Compra
+drop table ForAndIf.Compra_por_producto
 drop table ForAndIf.Compra
+drop table ForAndIf.Localidad_por_CP
+drop table ForAndIf.Envio_disponible_por_CP
 drop table ForAndIf.CP
 drop table ForAndIf.Descuento
 drop table ForAndIf.Descuento_por_venta
 drop table ForAndIf.Envio
 drop table ForAndIf.Localidad
-drop table ForAndIf.Localidad_por_CP
 drop table ForAndIf.Provincia
 drop table ForAndIf.Venta
 drop table ForAndIf.Cupon
 drop table ForAndIf.Cupon_por_venta
-drop table ForAndIf.Descuento_Compra
-drop table ForAndIf.Envio_disponible_por_CP
 drop table ForAndIf.Medio_Pago
 drop table ForAndIf.Producto
 drop table ForAndIf.Producto_por_variante
@@ -32,7 +33,7 @@ create table ForAndIf.Cliente (
    clie_fecha_nac date not null,
    clie_provincia decimal(18, 0) not null,
    clie_codigo_postal decimal(18, 0) not null,
-   clie_localidad nvarchar(255) not null
+   clie_localidad decimal(18, 0) not null
 )
 
 create table ForAndIf.Provincia (
@@ -58,7 +59,7 @@ create table ForAndIf.CP (
 
 create table ForAndIf.Envio_disponible_por_CP (
    envi_cp_medio decimal(18, 0) not null,
-   envi_cp_postal decimal(18, 2) not null,
+   envi_cp_postal decimal(18, 0) not null,
    envi_cp_costo decimal(18, 2) not null,
    envi_tiempo decimal(18, 2) not null  
 )
@@ -210,11 +211,55 @@ alter table ForAndIf.Cupon add constraint pk_cupon primary key (cupo_codigo)
 alter table ForAndIf.Envio_disponible_por_CP add constraint pk_envio_disponible_por_cp primary key (envi_cp_medio, envi_cp_postal)
 
 --Foreign Keys
-alter table ForAndIf.Cliente add constraint fk_clie_provincia foreign key (clie_provincia) 
-	references ForAndIf.Provincia (prov_id)
 alter table ForAndIf.Localidad add constraint fk_loca_provincia foreign key (loca_provincia) 
 	references ForAndIf.Provincia (prov_id)
+alter table ForAndIf.Localidad_por_CP add constraint fk_localidad_por_cp_loca_id foreign key (loca_id) 
+	references ForAndIf.Localidad (loca_id)
+alter table ForAndIf.Localidad_por_CP add constraint fk_localidad_por_cp_codi_postal foreign key (codi_postal) 
+	references ForAndIf.CP (codi_postal)
+alter table ForAndIf.Envio_disponible_por_CP add constraint fk_envio_disponible_por_cp_postal foreign key (envi_cp_postal) 
+	references ForAndIf.CP (codi_postal)
+alter table ForAndIf.Envio_disponible_por_CP add constraint fk_envio_disponible_por_cp_medio foreign key (envi_cp_medio) 
+	references ForAndIf.Envio (envi_medio)
+alter table ForAndIf.Cliente add constraint fk_clie_codigo_postal foreign key (clie_codigo_postal)
+   references ForAndIf.CP (codi_postal)
+alter table ForAndIf.Cliente add constraint fk_clie_provincia foreign key (clie_provincia) 
+	references ForAndIf.Provincia (prov_id)
+alter table ForAndIf.Cliente add constraint fk_clie_localidad foreign key (clie_localidad) 
+	references ForAndIf.Localidad (loca_id)
 alter table ForAndIf.Descuento_por_venta add constraint fk_descuento_hacia_venta foreign key (vent_codigo) 
 	references ForAndIf.Venta (vent_codigo)
 alter table ForAndIf.Descuento_por_venta add constraint fk_venta_hacia_descuento foreign key (desc_id) 
 	references ForAndIf.Descuento (desc_id)
+alter table ForAndIf.Descuento_Compra add constraint fk_descuento_compra_compra foreign key (comp_numero) 
+	references ForAndIf.Compra (comp_numero)   
+alter table ForAndIf.Compra add constraint fk_compra_proveedor foreign key (comp_proveedor) 
+	references ForAndIf.Proveedor (prov_cuit)
+alter table ForAndIf.Compra add constraint fk_compra_medio_pago foreign key (comp_medio_pago) 
+   references ForAndIf.Medio_Pago (medi_id)
+alter table ForAndIf.Variante add constraint fk_variante_cupon foreign key (vari_tipo)
+   references ForAndIf.Tipo_variante (tiva_id)
+alter table ForAndIf.Producto_por_variante add constraint fk_producto_por_variante_variante foreign key (vari_id)
+   references ForAndIf.Variante (vari_id)
+alter table ForAndIf.Producto_por_variante add constraint fk_producto_por_variante_producto foreign key (prod_codigo)
+   references ForAndIf.Producto (prod_codigo)
+alter table ForAndIf.Compra_por_producto add constraint fk_compra_numero foreign key (comp_numero)
+   references ForAndIf.Compra (comp_numero)
+alter table ForAndIf.Compra_por_producto add constraint fk_variante_id_codigo_cupon foreign key (vari_id, prod_codigo)
+   references ForAndIf.Producto_por_variante (vari_id, prod_codigo)
+alter table ForAndIf.Venta_por_producto add constraint fk_venta_hacia_producto foreign key (vent_codigo)
+   references ForAndIf.Venta (vent_codigo)
+alter table ForAndIf.Venta_por_producto add constraint fk_producto_hacia_venta foreign key (vari_id, prod_codigo)
+   references ForAndIf.Producto_por_variante (vari_id, prod_codigo)
+alter table ForAndIf.Cupon_por_venta add constraint fk_cupon_hacia_venta foreign key (vent_codigo)
+   references ForAndIf.Venta (vent_codigo)
+alter table ForAndIf.Cupon_por_venta add constraint fk_venta_hacia_cupon foreign key (cupo_codigo)
+   references ForAndIf.Cupon (cupo_codigo)
+alter table ForAndIf.Venta add constraint fk_venta_cliente foreign key (vent_cliente)
+   references ForAndIf.Cliente (clie_id)
+alter table ForAndIf.Venta add constraint fk_venta_envio foreign key (vent_envio)
+   references ForAndIf.Envio (envi_medio)
+alter table ForAndIf.Venta add constraint fk_venta_medio_pago foreign key (vent_medio_pago)
+   references ForAndIf.Medio_Pago (medi_id)
+alter table ForAndIf.Venta add constraint fk_venta_canal foreign key (vent_canal)
+   references ForAndIf.Canal (cana_id)
