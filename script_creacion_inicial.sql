@@ -49,7 +49,6 @@ create table ForAndIf.Localidad (
 
 create table ForAndIf.Localidad_por_CP (
    loca_id decimal(18, 0) not null,
-   loca_provincia decimal(18, 0) not null,
    codi_postal decimal(18, 0) not null
 )
 
@@ -87,7 +86,7 @@ create table ForAndIf.Venta (
 )
 
 create table ForAndIf.Descuento (
-   desc_id decimal(18, 0) not null identity(1,1),
+   desc_id decimal(18, 0) not null identity(1, 1),
    desc_concepto nvarchar(50) not null
 )
 
@@ -189,8 +188,8 @@ create table ForAndIf.Cupon (
 alter table ForAndIf.Cliente add constraint pk_cliente primary key (clie_id)
 alter table ForAndIf.Provincia add constraint pk_provincia primary key (prov_id)
 alter table ForAndIf.Compra add constraint pk_compra primary key (comp_numero)
-alter table ForAndIf.Localidad add constraint pk_localidad primary key (loca_id, loca_provincia)
-alter table ForAndIf.Localidad_por_CP add constraint pk_loca_id_codi_postal primary key (loca_id, loca_provincia, codi_postal)
+alter table ForAndIf.Localidad add constraint pk_localidad primary key (loca_id)
+alter table ForAndIf.Localidad_por_CP add constraint pk_loca_id_codi_postal primary key (loca_id, codi_postal)
 alter table ForAndIf.CP add constraint pk_codi_postal primary key (codi_postal)
 alter table ForAndIf.Descuento_por_venta add constraint pk_descuento_por_venta primary key (vent_codigo, desc_id)
 alter table ForAndIf.Envio add constraint pk_envio primary key (envi_medio)
@@ -214,8 +213,8 @@ alter table ForAndIf.Envio_disponible_por_CP add constraint pk_envio_disponible_
 --Foreign Keys
 alter table ForAndIf.Localidad add constraint fk_loca_provincia foreign key (loca_provincia) 
 	references ForAndIf.Provincia (prov_id)
-alter table ForAndIf.Localidad_por_CP add constraint fk_localidad_por_cp_loca_id foreign key (loca_id, loca_provincia) 
-	references ForAndIf.Localidad (loca_id, loca_provincia)
+alter table ForAndIf.Localidad_por_CP add constraint fk_localidad_por_cp_loca_id foreign key (loca_id) 
+	references ForAndIf.Localidad (loca_id)
 alter table ForAndIf.Localidad_por_CP add constraint fk_localidad_por_cp_codi_postal foreign key (codi_postal) 
 	references ForAndIf.CP (codi_postal)
 alter table ForAndIf.Envio_disponible_por_CP add constraint fk_envio_disponible_por_cp_postal foreign key (envi_cp_postal) 

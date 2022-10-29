@@ -80,16 +80,24 @@ insert ForAndIf.Localidad_por_CP (loca_id, codi_postal) (
     select (
         select loca_id from ForAndIf.Localidad
         where CLIENTE_LOCALIDAD = loca_nombre
+        and CLIENTE_PROVINCIA = (
+            select prov_nombre from ForAndIf.Provincia
+            where prov_id = loca_provincia
+        )
     ), CLIENTE_CODIGO_POSTAL from gd_esquema.Maestra
     where CLIENTE_LOCALIDAD is not null and CLIENTE_CODIGO_POSTAL is not null
-    group by CLIENTE_LOCALIDAD, CLIENTE_CODIGO_POSTAL
+    group by CLIENTE_LOCALIDAD, CLIENTE_CODIGO_POSTAL, CLIENTE_PROVINCIA
     union
     select (
         select loca_id from ForAndIf.Localidad
         where PROVEEDOR_LOCALIDAD = loca_nombre
+        and PROVEEDOR_PROVINCIA = (
+            select prov_nombre from ForAndIf.Provincia
+            where prov_id = loca_provincia
+        )
     ), PROVEEDOR_CODIGO_POSTAL from gd_esquema.Maestra
     where PROVEEDOR_LOCALIDAD is not null and PROVEEDOR_CODIGO_POSTAL is not null
-    group by PROVEEDOR_LOCALIDAD, PROVEEDOR_CODIGO_POSTAL
+    group by PROVEEDOR_LOCALIDAD, PROVEEDOR_CODIGO_POSTAL, PROVEEDOR_PROVINCIA
 )
 
 insert ForAndIf.Descuento (desc_concepto) (
@@ -102,5 +110,9 @@ insert ForAndIf.Canal (cana_nombre, cana_costo) (
     where VENTA_CANAL is not null and VENTA_CANAL_COSTO is not null
     group by VENTA_CANAL, VENTA_CANAL_COSTO 
 ) 
+
+select * from ForAndIf.Canal
+
+select * from ForAndIf.Tipo_variante
 -- select DESCUENTO_COMPRA_CODIGO, VENTA_DESCUENTO_CONCEPTO, DESCUENTO_COMPRA_VALOR, VENTA_DESCUENTO_IMPORTE from gd_esquema.Maestra
 -- GROUP BY DESCUENTO_COMPRA_CODIGO, VENTA_DESCUENTO_CONCEPTO, DESCUENTO_COMPRA_VALOR, VENTA_DESCUENTO_IMPORTE
