@@ -60,7 +60,7 @@ create table ForAndIf.Envio_disponible_por_CP (
    envi_cp_medio decimal(18, 0) not null,
    envi_cp_postal decimal(18, 0) not null,
    envi_cp_costo decimal(18, 2) not null,
-   envi_tiempo decimal(18, 2) not null  
+   envi_tiempo decimal(18, 2)
 )
 
 create table ForAndIf.Canal (
@@ -70,8 +70,7 @@ create table ForAndIf.Canal (
 )
 
 create table ForAndIf.Envio (
-   envi_medio decimal(18,0) not null,
-   envi_costo decimal(18,2) not null,
+   envi_medio decimal(18,0) not null identity(1, 1),
    envi_nombre nvarchar(255) not null
 )
 

@@ -111,8 +111,28 @@ insert ForAndIf.Canal (cana_nombre, cana_costo) (
     group by VENTA_CANAL, VENTA_CANAL_COSTO 
 ) 
 
-select * from ForAndIf.Canal
+insert ForAndIf.Envio (envi_nombre) (
+    select distinct VENTA_MEDIO_ENVIO from gd_esquema.Maestra
+    where VENTA_MEDIO_ENVIO IS NOT NULL
+    group by VENTA_MEDIO_ENVIO
+)
 
-select * from ForAndIf.Tipo_variante
--- select DESCUENTO_COMPRA_CODIGO, VENTA_DESCUENTO_CONCEPTO, DESCUENTO_COMPRA_VALOR, VENTA_DESCUENTO_IMPORTE from gd_esquema.Maestra
--- GROUP BY DESCUENTO_COMPRA_CODIGO, VENTA_DESCUENTO_CONCEPTO, DESCUENTO_COMPRA_VALOR, VENTA_DESCUENTO_IMPORTE
+insert ForAndIf.Envio_disponible_por_CP (envi_cp_medio, envi_cp_postal, envi_cp_costo, envi_tiempo) (
+    select (
+        select envi_medio from ForAndIf.Envio
+        where envi_nombre = VENTA_MEDIO_ENVIO
+    ), CLIENTE_CODIGO_POSTAL, 
+    (
+        select top 1 VENTA_ENVIO_PRECIO from gd_esquema.Maestra m2
+        where m1.CLIENTE_CODIGO_POSTAL = m2.CLIENTE_CODIGO_POSTAL
+        and m1.VENTA_MEDIO_ENVIO = m2.VENTA_MEDIO_ENVIO
+        order by VENTA_FECHA desc
+    ), NULL from gd_esquema.Maestra m1
+    where VENTA_MEDIO_ENVIO is not null and CLIENTE_CODIGO_POSTAL is not null and VENTA_ENVIO_PRECIO is not null 
+    group by VENTA_MEDIO_ENVIO, CLIENTE_CODIGO_POSTAL
+)
+
+
+-- select VENTA_MEDIO_ENVIO, VENTA_ENVIO_PRECIO from gd_esquema.Maestra
+-- where VENTA_MEDIO_ENVIO is not null and VENTA_ENVIO_PRECIO is not NULL
+-- group by VENTA_MEDIO_ENVIO, VENTA_ENVIO_PRECIO
