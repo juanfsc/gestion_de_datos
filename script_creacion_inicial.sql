@@ -1,26 +1,26 @@
-drop table ForAndIf.Canal
-drop table ForAndIf.Cliente
-drop table ForAndIf.Descuento_Compra
-drop table ForAndIf.Compra_por_producto
-drop table ForAndIf.Compra
-drop table ForAndIf.Localidad_por_CP
-drop table ForAndIf.Envio_disponible_por_CP
-drop table ForAndIf.CP
-drop table ForAndIf.Descuento
-drop table ForAndIf.Descuento_por_venta
-drop table ForAndIf.Envio
-drop table ForAndIf.Localidad
-drop table ForAndIf.Provincia
-drop table ForAndIf.Venta
-drop table ForAndIf.Cupon
-drop table ForAndIf.Cupon_por_venta
-drop table ForAndIf.Medio_Pago
-drop table ForAndIf.Producto
-drop table ForAndIf.Producto_por_variante
-drop table ForAndIf.Proveedor
-drop table ForAndIf.Tipo_variante
-drop table ForAndIf.Variante
-drop table ForAndIf.Venta_por_producto
+-- drop table ForAndIf.Canal
+-- drop table ForAndIf.Cliente
+-- drop table ForAndIf.Descuento_Compra
+-- drop table ForAndIf.Compra_por_producto
+-- drop table ForAndIf.Compra
+-- drop table ForAndIf.Localidad_por_CP
+-- drop table ForAndIf.Envio_disponible_por_CP
+-- drop table ForAndIf.CP
+-- drop table ForAndIf.Descuento
+-- drop table ForAndIf.Descuento_por_venta
+-- drop table ForAndIf.Envio
+-- drop table ForAndIf.Localidad
+-- drop table ForAndIf.Provincia
+-- drop table ForAndIf.Venta
+-- drop table ForAndIf.Cupon
+-- drop table ForAndIf.Cupon_por_venta
+-- drop table ForAndIf.Medio_Pago
+-- drop table ForAndIf.Producto
+-- drop table ForAndIf.Producto_por_variante
+-- drop table ForAndIf.Proveedor
+-- drop table ForAndIf.Tipo_variante
+-- drop table ForAndIf.Variante
+-- drop table ForAndIf.Venta_por_producto
 
 create table ForAndIf.Cliente (
    clie_id decimal(18, 0) not null,
@@ -37,20 +37,20 @@ create table ForAndIf.Cliente (
 )
 
 create table ForAndIf.Provincia (
-   prov_id decimal(18, 0) not null,
+   prov_id decimal(18, 0) not null identity(1, 1),
    prov_nombre nvarchar(255) not null
 )
 
 create table ForAndIf.Localidad (
-   loca_id decimal(18, 0) not null,
+   loca_id decimal(18, 0) not null identity(1, 1),
    loca_provincia decimal(18, 0) not null,
    loca_nombre nvarchar(255) not null
 )
 
 create table ForAndIf.Localidad_por_CP (
    loca_id decimal(18, 0) not null,
-   codi_postal decimal(18, 0) not null,
-   loca_nombre nvarchar(255) not null
+   loca_provincia decimal(18, 0) not null,
+   codi_postal decimal(18, 0) not null
 )
 
 create table ForAndIf.CP (
@@ -65,7 +65,7 @@ create table ForAndIf.Envio_disponible_por_CP (
 )
 
 create table ForAndIf.Canal (
-   cana_id decimal(18,0) not null,
+   cana_id decimal(18,0) not null identity(1,1),
    cana_nombre nvarchar(2255) not null,
    cana_costo decimal(18,2) not null
 )
@@ -87,7 +87,7 @@ create table ForAndIf.Venta (
 )
 
 create table ForAndIf.Descuento (
-   desc_id decimal(18, 0) not null,
+   desc_id decimal(18, 0) not null identity(1,1),
    desc_concepto nvarchar(50) not null
 )
 
@@ -130,10 +130,10 @@ create table ForAndIf.Proveedor (
    prov_cuit nvarchar(50) not null,
    prov_razon_social nvarchar(50) not null,
    prov_domicilio nvarchar(50) not null,
-   prov_localidad nvarchar(255) not null,
+   prov_localidad decimal(18, 0) not null,
    prov_mail nvarchar(50) not null,
    prov_codigo_postal decimal(18,0) not null,
-   prov_provincia nvarchar(255) not null
+   prov_provincia decimal(18, 0) not null
 )
 
 create table ForAndIf.Producto (
@@ -161,13 +161,13 @@ create table ForAndIf.Venta_por_producto (
 )
 
 create table ForAndIf.Variante (
-   vari_id decimal(18, 0) not null,
+   vari_id decimal(18, 0) not null identity(1, 1),
    vari_tipo decimal(18, 0) not null,
-   vari_valor decimal(18, 0) not null
+   vari_valor nvarchar(50) not null
 )
 
 create table ForAndIf.Tipo_variante (
-   tiva_id decimal(18, 0) not null,
+   tiva_id decimal(18, 0) not null identity(1, 1),
    tiva_nombre nvarchar(50) not null
 )
 
@@ -189,8 +189,8 @@ create table ForAndIf.Cupon (
 alter table ForAndIf.Cliente add constraint pk_cliente primary key (clie_id)
 alter table ForAndIf.Provincia add constraint pk_provincia primary key (prov_id)
 alter table ForAndIf.Compra add constraint pk_compra primary key (comp_numero)
-alter table ForAndIf.Localidad add constraint pk_localidad primary key (loca_id)
-alter table ForAndIf.Localidad_por_CP add constraint pk_loca_id_codi_postal primary key (loca_id, codi_postal)
+alter table ForAndIf.Localidad add constraint pk_localidad primary key (loca_id, loca_provincia)
+alter table ForAndIf.Localidad_por_CP add constraint pk_loca_id_codi_postal primary key (loca_id, loca_provincia, codi_postal)
 alter table ForAndIf.CP add constraint pk_codi_postal primary key (codi_postal)
 alter table ForAndIf.Descuento_por_venta add constraint pk_descuento_por_venta primary key (vent_codigo, desc_id)
 alter table ForAndIf.Envio add constraint pk_envio primary key (envi_medio)
@@ -204,6 +204,7 @@ alter table ForAndIf.Proveedor add constraint pk_proveedor primary key (prov_cui
 alter table ForAndIf.Compra_por_producto add constraint pk_compra_por_producto primary key (comp_numero, prod_codigo, vari_id)
 alter table ForAndIf.Variante add constraint pk_variante primary key (vari_id)
 alter table ForAndIf.Tipo_variante add constraint pk_tipo_variante primary key (tiva_id)
+
 alter table ForAndIf.Producto_por_variante add constraint pk_producto_por_variante primary key (vari_id, prod_codigo)
 alter table ForAndIf.Venta_por_producto add constraint pk_venta_por_producto primary key (vent_codigo, prod_codigo, vari_id)
 alter table ForAndIf.Cupon_por_venta add constraint pk_cupon_por_venta primary key (cupo_codigo, vent_codigo)
@@ -213,8 +214,8 @@ alter table ForAndIf.Envio_disponible_por_CP add constraint pk_envio_disponible_
 --Foreign Keys
 alter table ForAndIf.Localidad add constraint fk_loca_provincia foreign key (loca_provincia) 
 	references ForAndIf.Provincia (prov_id)
-alter table ForAndIf.Localidad_por_CP add constraint fk_localidad_por_cp_loca_id foreign key (loca_id) 
-	references ForAndIf.Localidad (loca_id)
+alter table ForAndIf.Localidad_por_CP add constraint fk_localidad_por_cp_loca_id foreign key (loca_id, loca_provincia) 
+	references ForAndIf.Localidad (loca_id, loca_provincia)
 alter table ForAndIf.Localidad_por_CP add constraint fk_localidad_por_cp_codi_postal foreign key (codi_postal) 
 	references ForAndIf.CP (codi_postal)
 alter table ForAndIf.Envio_disponible_por_CP add constraint fk_envio_disponible_por_cp_postal foreign key (envi_cp_postal) 
@@ -263,3 +264,9 @@ alter table ForAndIf.Venta add constraint fk_venta_medio_pago foreign key (vent_
    references ForAndIf.Medio_Pago (medi_id)
 alter table ForAndIf.Venta add constraint fk_venta_canal foreign key (vent_canal)
    references ForAndIf.Canal (cana_id)
+alter table ForAndIf.Proveedor add constraint fk_prov_provincia foreign key (prov_provincia)
+   references ForAndIf.Provincia (prov_id) 
+alter table ForAndIf.Proveedor add constraint fk_prov_localidad foreign key (prov_localidad)
+   references ForAndIf.Localidad (loca_id)
+alter table ForAndIf.Proveedor add constraint fk_prov_cp foreign key (prov_codigo_postal)
+   references ForAndIf.CP (codi_postal)
