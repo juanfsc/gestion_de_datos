@@ -180,14 +180,16 @@ begin
 end
 go
 
-create proc ForAndIf.migrar_envio_disponible_por_CP as
+create proc ForAndIf.migrar_envio_disponible_por_localidad_y_CP as
 begin
-    insert ForAndIf.Envio_disponible_por_CP (envi_cp_medio, envi_cp_postal, envi_cp_costo, envi_tiempo) (
+    insert ForAndIf.Envio_disponible_por_localidad_y_CP (envi_cp_medio, envi_cp_localidad, envi_cp_postal, envi_cp_costo, envi_tiempo) (
         select (
             select envi_medio from ForAndIf.Envio
             where envi_nombre = VENTA_MEDIO_ENVIO
         
-        ), CLIENTE_CODIGO_POSTAL,
+        ), 
+        ForAndIf.obtener_id_localidad(CLIENTE_PROVINCIA, CLIENTE_LOCALIDAD),
+        CLIENTE_CODIGO_POSTAL,
         VENTA_ENVIO_PRECIO,
         /*(
             select top 1 VENTA_ENVIO_PRECIO from gd_esquema.Maestra m2
@@ -203,8 +205,8 @@ begin
         ORDER BY CLIENTE_CODIGO_POSTAL
         */
         NULL from gd_esquema.Maestra m1
-        where VENTA_MEDIO_ENVIO is not null and CLIENTE_CODIGO_POSTAL is not null and VENTA_ENVIO_PRECIO is not null 
-        group by VENTA_MEDIO_ENVIO, CLIENTE_CODIGO_POSTAL, VENTA_ENVIO_PRECIO
+        where VENTA_MEDIO_ENVIO is not null and CLIENTE_LOCALIDAD is not null and CLIENTE_CODIGO_POSTAL is not null and VENTA_ENVIO_PRECIO is not null 
+        group by VENTA_MEDIO_ENVIO, CLIENTE_CODIGO_POSTAL, CLIENTE_LOCALIDAD, CLIENTE_PROVINCIA, VENTA_ENVIO_PRECIO
     )
 end
 go
@@ -263,7 +265,7 @@ exec ForAndIf.migrar_localidad_por_CP
 exec ForAndIf.migrar_descuento
 exec ForAndIf.migrar_canal
 exec ForAndIf.migrar_envio
-exec ForAndIf.migrar_envio_disponible_por_CP
+exec ForAndIf.migrar_envio_disponible_por_localidad_y_CP
 exec ForAndIf.migrar_medio_pago
 exec ForAndIf.migrar_proveedor
 exec ForAndIf.migrar_cliente

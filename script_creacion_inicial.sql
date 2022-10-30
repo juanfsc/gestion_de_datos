@@ -8,7 +8,7 @@ use GD2C2022
 -- drop table ForAndIf.Compra
 -- drop table ForAndIf.Proveedor
 -- drop table ForAndIf.Localidad_por_CP
--- drop table ForAndIf.Envio_disponible_por_CP
+-- drop table ForAndIf.Envio_disponible_por_localidad_y_CP
 -- drop table ForAndIf.Localidad
 -- drop table ForAndIf.Provincia
 -- drop table ForAndIf.Producto_por_variante
@@ -33,7 +33,7 @@ use GD2C2022
 -- drop proc ForAndIf.migrar_descuento
 -- drop proc ForAndIf.migrar_canal
 -- drop proc ForAndIf.migrar_envio
--- drop proc ForAndIf.migrar_envio_disponible_por_CP
+-- drop proc ForAndIf.migrar_envio_disponible_por_localidad_y_CP
 -- drop proc ForAndIf.migrar_medio_pago
 -- drop proc ForAndIf.migrar_proveedor
 
@@ -81,8 +81,9 @@ create table ForAndIf.CP (
    codi_postal decimal(18, 0) not null
 )
 
-create table ForAndIf.Envio_disponible_por_CP (
+create table ForAndIf.Envio_disponible_por_localidad_y_CP (
    envi_cp_medio decimal(18, 0) not null,
+   envi_cp_localidad decimal(18, 0) not null,
    envi_cp_postal decimal(18, 0) not null,
    envi_cp_costo decimal(18, 2) not null,
    envi_tiempo decimal(18, 2)
@@ -232,7 +233,7 @@ alter table ForAndIf.Producto_por_variante add constraint pk_producto_por_varian
 alter table ForAndIf.Venta_por_producto add constraint pk_venta_por_producto primary key (vent_codigo, prod_codigo, vari_id)
 alter table ForAndIf.Cupon_por_venta add constraint pk_cupon_por_venta primary key (cupo_codigo, vent_codigo)
 alter table ForAndIf.Cupon add constraint pk_cupon primary key (cupo_codigo)
-alter table ForAndIf.Envio_disponible_por_CP add constraint pk_envio_disponible_por_cp primary key (envi_cp_medio, envi_cp_postal)
+alter table ForAndIf.Envio_disponible_por_localidad_y_CP add constraint pk_envio_disponible_por_localidad_y_cp primary key (envi_cp_medio, envi_cp_localidad, envi_cp_postal)
 
 --Foreign Keys
 alter table ForAndIf.Localidad add constraint fk_loca_provincia foreign key (loca_provincia)
@@ -241,9 +242,9 @@ alter table ForAndIf.Localidad_por_CP add constraint fk_localidad_por_cp_loca_id
 	references ForAndIf.Localidad (loca_id)
 alter table ForAndIf.Localidad_por_CP add constraint fk_localidad_por_cp_codi_postal foreign key (codi_postal)
 	references ForAndIf.CP (codi_postal)
-alter table ForAndIf.Envio_disponible_por_CP add constraint fk_envio_disponible_por_cp_postal foreign key (envi_cp_postal)
-	references ForAndIf.CP (codi_postal)
-alter table ForAndIf.Envio_disponible_por_CP add constraint fk_envio_disponible_por_cp_medio foreign key (envi_cp_medio)
+alter table ForAndIf.Envio_disponible_por_localidad_y_CP add constraint fk_envio_disponible_por_localidad_y_cp_postal foreign key (envi_cp_localidad, envi_cp_postal)
+	references ForAndIf.Localidad_por_CP (loca_id, codi_postal)
+alter table ForAndIf.Envio_disponible_por_localidad_y_CP add constraint fk_envio_disponible_por_localidad_y_cp_medio foreign key (envi_cp_medio)
 	references ForAndIf.Envio (envi_medio)
 alter table ForAndIf.Cliente add constraint fk_clie_codigo_postal foreign key (clie_codigo_postal)
    references ForAndIf.CP (codi_postal)
