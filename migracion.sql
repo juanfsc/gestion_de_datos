@@ -253,6 +253,22 @@ begin
 end
 go
 
+create proc ForAndIf.migrar_compra as
+begin
+    insert ForAndIf.Compra (comp_numero, comp_fecha, comp_proveedor, comp_medio_pago, comp_total) (
+        select COMPRA_NUMERO, COMPRA_FECHA, PROVEEDOR_CUIT,
+        (
+            select medi_id from ForAndIf.Medio_pago
+            where medi_pago = COMPRA_MEDIO_PAGO
+        ),
+        COMPRA_TOTAL 
+        from gd_esquema.Maestra
+        where COMPRA_NUMERO is not null and COMPRA_FECHA is not null and PROVEEDOR_CUIT is not null and COMPRA_MEDIO_PAGO is not null and COMPRA_TOTAL is not null
+        group by COMPRA_NUMERO, COMPRA_FECHA, PROVEEDOR_CUIT, COMPRA_MEDIO_PAGO, COMPRA_TOTAL
+    )
+end
+go
+
 --INVOCACION PROCEDURES
 exec ForAndIf.migrar_tipo_variante
 exec ForAndIf.migrar_variante
@@ -269,6 +285,7 @@ exec ForAndIf.migrar_envio_disponible_por_localidad_y_CP
 exec ForAndIf.migrar_medio_pago
 exec ForAndIf.migrar_proveedor
 exec ForAndIf.migrar_cliente
+exec ForAndIf.migrar_compra
 -- select VENTA_MEDIO_ENVIO, VENTA_ENVIO_PRECIO from gd_esquema.Maestra
 -- where VENTA_MEDIO_ENVIO is not null and VENTA_ENVIO_PRECIO is not NULL
 -- group by VENTA_MEDIO_ENVIO, VENTA_ENVIO_PRECIO
