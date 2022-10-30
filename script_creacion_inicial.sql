@@ -1,6 +1,4 @@
 use GD2C2022
-go
-
 -- drop table ForAndIf.Descuento_por_venta
 -- drop table ForAndIf.Descuento
 -- drop table ForAndIf.Cupon_por_venta
@@ -24,14 +22,33 @@ go
 -- drop table ForAndIf.Canal
 -- drop table ForAndIf.Envio
 -- drop table ForAndIf.Medio_Pago
+-- drop proc ForAndIf.migrar_tipo_variante
+-- drop proc ForAndIf.migrar_variante
+-- drop proc ForAndIf.migrar_producto
+-- drop proc ForAndIf.migrar_provincia
+-- drop proc ForAndIf.migrar_localidad
+-- drop proc ForAndIf.migrar_cupon
+-- drop proc ForAndIf.migrar_CP
+-- drop proc ForAndIf.migrar_localidad_por_CP
+-- drop proc ForAndIf.migrar_descuento
+-- drop proc ForAndIf.migrar_canal
+-- drop proc ForAndIf.migrar_envio
+-- drop proc ForAndIf.migrar_envio_disponible_por_CP
+-- drop proc ForAndIf.migrar_medio_pago
+-- drop proc ForAndIf.migrar_proveedor
+
+-- drop proc ForAndIf.migrar_cliente
+-- drop function ForAndIf.obtener_id_provincia
+-- drop function ForAndIf.obtener_id_localidad
 -- drop schema ForAndIf
--- GO
+-- go
+
 
 create schema ForAndIf
 GO
 
 create table ForAndIf.Cliente (
-   clie_id decimal(18, 0) not null,
+   clie_id decimal(18, 0) not null identity(1, 1),
    clie_nombre nvarchar(255) not null,
    clie_apellido nvarchar(255) not null,
    clie_dni decimal(18, 0) not null,
