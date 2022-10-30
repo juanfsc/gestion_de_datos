@@ -1,3 +1,6 @@
+use GD2C2022
+go
+
 insert ForAndIf.Tipo_variante (tiva_nombre) (
     select distinct PRODUCTO_TIPO_VARIANTE from gd_esquema.Maestra
     where PRODUCTO_TIPO_VARIANTE is not null
@@ -130,6 +133,29 @@ insert ForAndIf.Envio_disponible_por_CP (envi_cp_medio, envi_cp_postal, envi_cp_
     ), NULL from gd_esquema.Maestra m1
     where VENTA_MEDIO_ENVIO is not null and CLIENTE_CODIGO_POSTAL is not null and VENTA_ENVIO_PRECIO is not null 
     group by VENTA_MEDIO_ENVIO, CLIENTE_CODIGO_POSTAL
+)
+
+insert ForAndIf.Medio_Pago (medi_pago, medi_costo, medi_porcentaje_descuento) (
+    select VENTA_MEDIO_PAGO, VENTA_MEDIO_PAGO_COSTO, NULL from gd_esquema.Maestra
+    group by VENTA_MEDIO_PAGO, VENTA_MEDIO_PAGO_COSTO 
+    having VENTA_MEDIO_PAGO is not null and VENTA_MEDIO_PAGO_COSTO is not null
+    union
+    select COMPRA_MEDIO_PAGO, NULL,  NULL from gd_esquema.Maestra
+    group by COMPRA_MEDIO_PAGO
+    having COMPRA_MEDIO_PAGO is not null and COMPRA_MEDIO_PAGO not in (select VENTA_MEDIO_PAGO from gd_esquema.Maestra
+    group by VENTA_MEDIO_PAGO
+    having VENTA_MEDIO_PAGO is not null)
+)
+
+insert ForAndIf.Proveedor (prov_cuit, prov_razon_social, prov_domicilio, prov_localidad, prov_mail, prov_codigo_postal, prov_provincia) (
+    select PROVEEDOR_CUIT, PROVEEDOR_RAZON_SOCIAL, PROVEEDOR_DOMICILIO, 
+    (select loca_id from ForAndIf.Localidad where loca_nombre = PROVEEDOR_LOCALIDAD and loca_provincia = (select p.prov_id from ForAndIf.Provincia as p where p.prov_nombre = PROVEEDOR_PROVINCIA)), 
+    PROVEEDOR_MAIL, 
+    PROVEEDOR_CODIGO_POSTAL,
+    (select prov_id from ForAndIf.Provincia where prov_nombre = PROVEEDOR_PROVINCIA)
+    from gd_esquema.Maestra
+    where PROVEEDOR_CUIT is not null
+    group by PROVEEDOR_CUIT, PROVEEDOR_RAZON_SOCIAL, PROVEEDOR_DOMICILIO, PROVEEDOR_LOCALIDAD, PROVEEDOR_MAIL, PROVEEDOR_CODIGO_POSTAL, PROVEEDOR_PROVINCIA
 )
 
 
