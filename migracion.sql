@@ -349,19 +349,17 @@ begin
 end
 go
 
-
 create proc ForAndIf.migrar_venta_por_producto as
 begin
-    insert FordAndIf.Venta_por_producto (vent_codigo, prod_codigo, variante_id, prod_precio_unitario, prod_cantidad) (
+    insert ForAndIf.Venta_por_producto (vent_codigo, prod_codigo, vari_id, prod_precio_unitario, prod_cantidad) (
         select VENTA_CODIGO, PRODUCTO_CODIGO, ForAndIf.obtener_id_variante(PRODUCTO_VARIANTE, PRODUCTO_TIPO_VARIANTE),
         VENTA_PRODUCTO_PRECIO, 
-        VENTA_PRODUCTO_CANTIDAD
+        sum(VENTA_PRODUCTO_CANTIDAD)
         from gd_esquema.Maestra
         where VENTA_CODIGO is not null and PRODUCTO_CODIGO is not null and PRODUCTO_VARIANTE is not null AND PRODUCTO_TIPO_VARIANTE is not null and VENTA_PRODUCTO_PRECIO is not null and VENTA_PRODUCTO_CANTIDAD is not null
-        group by VENTA_CODIGO, PRODUCTO_CODIGO, PRODUCTO_VARIANTE, PRODUCTO_TIPO_VARIANTE, VENTA_PRODUCTO_PRECIO, VENTA_PRODUCTO_CANTIDAD   
+        group by VENTA_CODIGO, PRODUCTO_CODIGO, PRODUCTO_VARIANTE, PRODUCTO_TIPO_VARIANTE, VENTA_PRODUCTO_PRECIO
     )
 end
-go
 
 --INVOCACION PROCEDURES
 exec ForAndIf.migrar_tipo_variante
