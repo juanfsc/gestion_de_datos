@@ -320,7 +320,7 @@ go
 
 create proc ForAndIf.migrar_venta as
 begin
-    insert ForAndIf.Venta (vent_codigo, vent_fecha, vent_cliente, vent_envio, vent_medio_pago, vent_medio_pago_costo, vent_canal, vent_canal_costo) (
+    insert ForAndIf.Venta (vent_codigo, vent_fecha, vent_cliente, vent_envio, vent_medio_pago, vent_medio_pago_costo, vent_canal, vent_canal_costo, vent_total) (
         select VENTA_CODIGO, VENTA_FECHA,
         (
             select clie_id from ForAndIf.Cliente
@@ -341,10 +341,10 @@ begin
             select cana_id from ForAndIf.Canal
             where cana_nombre = VENTA_CANAL
         ),
-        VENTA_CANAL_COSTO
+        VENTA_CANAL_COSTO, VENTA_TOTAL
         from gd_esquema.Maestra
-        where VENTA_CODIGO is not null and VENTA_FECHA is not null and CLIENTE_DNI is not null and CLIENTE_NOMBRE is not null and CLIENTE_APELLIDO is not null and VENTA_MEDIO_ENVIO is not null and VENTA_MEDIO_PAGO is not null and VENTA_MEDIO_PAGO_COSTO is not null and VENTA_CANAL is not null and VENTA_CANAL_COSTO is not null
-        group by VENTA_CODIGO, VENTA_FECHA, CLIENTE_DNI, CLIENTE_NOMBRE, CLIENTE_APELLIDO, VENTA_MEDIO_ENVIO, VENTA_MEDIO_PAGO, VENTA_MEDIO_PAGO_COSTO, VENTA_CANAL, VENTA_CANAL_COSTO
+        where VENTA_CODIGO is not null and VENTA_FECHA is not null and CLIENTE_DNI is not null and CLIENTE_NOMBRE is not null and CLIENTE_APELLIDO is not null and VENTA_MEDIO_ENVIO is not null and VENTA_MEDIO_PAGO is not null and VENTA_MEDIO_PAGO_COSTO is not null and VENTA_CANAL is not null and VENTA_CANAL_COSTO is not null and VENTA_TOTAL is not null
+        group by VENTA_CODIGO, VENTA_FECHA, CLIENTE_DNI, CLIENTE_NOMBRE, CLIENTE_APELLIDO, VENTA_MEDIO_ENVIO, VENTA_MEDIO_PAGO, VENTA_MEDIO_PAGO_COSTO, VENTA_CANAL, VENTA_CANAL_COSTO, VENTA_TOTAL
     )
 end
 go
@@ -360,6 +360,32 @@ begin
         group by VENTA_CODIGO, PRODUCTO_CODIGO, PRODUCTO_VARIANTE, PRODUCTO_TIPO_VARIANTE, VENTA_PRODUCTO_PRECIO
     )
 end
+go
+
+create proc ForAndIf.migrar_cupon_por_venta as
+begin
+    insert ForAndIf.Cupon_por_venta (cupo_codigo, vent_codigo, cupo_importe) (
+        select VENTA_CUPON_CODIGO, VENTA_CODIGO, VENTA_CUPON_IMPORTE
+        from gd_esquema.Maestra
+        where VENTA_CUPON_CODIGO is not null AND VENTA_CODIGO is not null AND VENTA_CUPON_IMPORTE  is not null
+        group by VENTA_CUPON_CODIGO, VENTA_CODIGO, VENTA_CUPON_IMPORTE
+    )
+end
+go
+
+-- TODO: modificar tabla medio de pago para agregar descuento de medio de pago
+select medi_pago, (
+    select sum(VENTA_DESCUENTO_IMPORTE) from gd_esquema.Maestra
+    where VENTA_DESCUENTO_CONCEPTO = medi_pago
+) / (
+    select sum(prod_cantidad * prod_precio_unitario) from ForAndIf.Venta v1
+    join ForAndIf.Venta_por_producto v2 on v1.vent_codigo = v2.vent_codigo
+    where v1.vent_codigo in (
+        select VENTA_CODIGO from gd_esquema.Maestra
+        where VENTA_DESCUENTO_CONCEPTO = medi_pago
+    )
+) from ForAndIf.Medio_Pago
+
 
 --INVOCACION PROCEDURES
 exec ForAndIf.migrar_tipo_variante
@@ -382,6 +408,7 @@ exec ForAndIf.migrar_producto_por_variante
 exec ForAndIf.migrar_compra_por_producto
 exec ForAndIf.migrar_venta
 exec ForAndIf.migrar_venta_por_producto
+exec ForAndIf.migrar_cupon_por_venta
 
 -- select VENTA_MEDIO_ENVIO, VENTA_ENVIO_PRECIO from gd_esquema.Maestra
 -- where VENTA_MEDIO_ENVIO is not null and VENTA_ENVIO_PRECIO is not NULL
