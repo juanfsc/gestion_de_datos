@@ -349,11 +349,12 @@ begin
 end
 go
 
-
-create proc ForAndIf.migrar_venta_por_producto as
+alter proc ForAndIf.migrar_venta_por_producto as
 begin
-    insert FordAndIf.Venta_por_producto (vent_codigo, prod_codigo, variante_id, prod_precio_unitario, prod_cantidad) (
-        select VENTA_CODIGO, PRODUCTO_CODIGO, ForAndIf.obtener_id_variante(PRODUCTO_VARIANTE, PRODUCTO_TIPO_VARIANTE),
+    insert ForAndIf.Venta_por_producto (vent_codigo, prod_codigo, vari_id, prod_precio_unitario, prod_cantidad) (
+        select VENTA_CODIGO,
+        PRODUCTO_CODIGO, 
+        ForAndIf.obtener_id_variante(PRODUCTO_VARIANTE, PRODUCTO_TIPO_VARIANTE),
         VENTA_PRODUCTO_PRECIO, 
         VENTA_PRODUCTO_CANTIDAD
         from gd_esquema.Maestra
@@ -362,6 +363,37 @@ begin
     )
 end
 go
+
+select VENTA_CODIGO,
+PRODUCTO_CODIGO, 
+ForAndIf.obtener_id_variante(PRODUCTO_VARIANTE, PRODUCTO_TIPO_VARIANTE),
+VENTA_PRODUCTO_PRECIO, 
+VENTA_PRODUCTO_CANTIDAD
+from gd_esquema.Maestra
+where VENTA_CODIGO is not null and PRODUCTO_CODIGO is not null and PRODUCTO_VARIANTE is not null AND PRODUCTO_TIPO_VARIANTE is not null and VENTA_PRODUCTO_PRECIO is not null and VENTA_PRODUCTO_CANTIDAD is not null
+group by VENTA_CODIGO, PRODUCTO_CODIGO, PRODUCTO_VARIANTE, PRODUCTO_TIPO_VARIANTE, VENTA_PRODUCTO_PRECIO, VENTA_PRODUCTO_CANTIDAD   
+
+select distinct VENTA_CODIGO,
+distinct PRODUCTO_CODIGO, 
+distinct ForAndIf.obtener_id_variante(PRODUCTO_VARIANTE, PRODUCTO_TIPO_VARIANTE),
+distinct VENTA_PRODUCTO_PRECIO, 
+distinct VENTA_PRODUCTO_CANTIDAD
+from gd_esquema.Maestra
+where VENTA_CODIGO is not null and PRODUCTO_CODIGO is not null and PRODUCTO_VARIANTE is not null AND PRODUCTO_TIPO_VARIANTE is not null and VENTA_PRODUCTO_PRECIO is not null and VENTA_PRODUCTO_CANTIDAD is not null
+
+-- create proc ForAndIf.migrar_compra_por_producto as
+-- begin
+--     insert ForAndIf.Compra_por_producto (comp_numero, prod_codigo, vari_id, prod_precio_unitario, prod_cantidad) (
+--         select COMPRA_NUMERO, PRODUCTO_CODIGO, 
+--         ForAndIf.obtener_id_variante(PRODUCTO_VARIANTE, PRODUCTO_TIPO_VARIANTE),
+--         COMPRA_PRODUCTO_PRECIO, sum(COMPRA_PRODUCTO_CANTIDAD)
+--         from gd_esquema.Maestra
+--         where COMPRA_NUMERO is not null and PRODUCTO_CODIGO is not null and PRODUCTO_TIPO_VARIANTE is not null and PRODUCTO_VARIANTE is not null and COMPRA_PRODUCTO_PRECIO is not null and COMPRA_PRODUCTO_CANTIDAD is not null
+--         group by COMPRA_NUMERO, PRODUCTO_CODIGO, PRODUCTO_TIPO_VARIANTE, PRODUCTO_VARIANTE, COMPRA_PRODUCTO_PRECIO
+--     )
+-- end
+-- go
+
 
 --INVOCACION PROCEDURES
 exec ForAndIf.migrar_tipo_variante
