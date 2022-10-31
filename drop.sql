@@ -35,6 +35,7 @@ drop proc ForAndIf.migrar_localidad_por_CP
 drop proc ForAndIf.migrar_descuento
 drop proc ForAndIf.migrar_canal
 drop proc ForAndIf.migrar_envio
+drop proc ForAndIf.migrar_envio_disponible_por_localidad_y_CP
 drop proc ForAndIf.migrar_envio_disponible_por_CP
 drop proc ForAndIf.migrar_medio_pago
 drop proc ForAndIf.migrar_proveedor
