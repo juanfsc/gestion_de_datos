@@ -42,8 +42,10 @@
 -- drop proc ForAndIf.migrar_compra_por_producto
 -- drop proc ForAndIf.migrar_venta
 -- drop proc ForAndIf.migrar_venta_por_producto
+-- drop proc ForAndIf.migrar_cupon_por_venta
 -- drop function ForAndIf.obtener_id_provincia
 -- drop function ForAndIf.obtener_id_localidad
+-- drop function ForAndIf.obtener_id_variante
 -- drop schema ForAndIf
 -- go
 
@@ -112,7 +114,8 @@ create table ForAndIf.Venta (
    vent_medio_pago decimal(18, 0) not null,
    vent_medio_pago_costo decimal(18, 2) not null,
    vent_canal decimal(18, 0) not null,
-   vent_canal_costo decimal(18, 0) not null
+   vent_canal_costo decimal(18, 0) not null,
+   vent_total decimal(18, 2) not null
 )
 
 create table ForAndIf.Descuento (
