@@ -4,20 +4,30 @@ go
 
 create function ForAndIf.obtener_id_provincia (@prov_nombre nvarchar(255)) RETURNS decimal(18, 0) AS
 begin
-    DECLARE @id_provincia INTEGER;
-    SET @id_provincia =  ( select prov_id from ForAndIf.Provincia
+    DECLARE @id INTEGER;
+    SET @id =  ( select prov_id from ForAndIf.Provincia
         where @prov_nombre = prov_nombre)
-    RETURN @id_provincia
+    RETURN @id
 end
 go
 
 create function ForAndIf.obtener_id_localidad (@prov_nombre nvarchar(255), @loca_nombre nvarchar(255)) RETURNS decimal(18, 0) AS
 begin
-    DECLARE @id_localidad INTEGER;
-    SET @id_localidad = ( select loca_id from ForAndIf.Localidad join ForAndIf.Provincia
+    DECLARE @id INTEGER;
+    SET @id = ( select loca_id from ForAndIf.Localidad join ForAndIf.Provincia
         on loca_provincia = prov_id
         where prov_nombre=@prov_nombre and loca_nombre=@loca_nombre)
-    RETURN @id_localidad
+    RETURN @id
+end
+go
+
+create function ForAndIf.obtener_id_variante (@vari_valor nvarchar(50), @tiva_nombre nvarchar(50)) returns decimal(18, 0) as
+begin
+    DECLARE @id INTEGER;
+    SET @id = (select vari_id from ForAndIf.Variante
+        join ForAndIf.Tipo_variante on vari_tipo = tiva_id
+        where tiva_nombre = @tiva_nombre and vari_valor = @vari_valor)
+    RETURN @id
 end
 go
 
@@ -273,11 +283,7 @@ create proc ForAndIf.migrar_producto_por_variante as
 begin
     insert ForAndIf.Producto_por_variante (vari_id, prod_codigo, producto_variante_precio_compra, producto_variante_precio_venta) (
         select 
-        (
-            select vari_id from ForAndIf.Variante
-            join Tipo_variante on vari_tipo = tiva_id
-            where tiva_nombre = PRODUCTO_TIPO_VARIANTE and vari_valor = PRODUCTO_VARIANTE 
-        ), PRODUCTO_CODIGO,
+        ForAndIf.obtener_id_variante(PRODUCTO_VARIANTE, PRODUCTO_TIPO_VARIANTE), PRODUCTO_CODIGO,
         (
             select top 1 COMPRA_PRODUCTO_PRECIO from gd_esquema.Maestra M2
             where COMPRA_PRODUCTO_PRECIO is not null
@@ -303,12 +309,8 @@ create proc ForAndIf.migrar_compra_por_producto as
 begin
     insert ForAndIf.Compra_por_producto (comp_numero, prod_codigo, vari_id, prod_precio_unitario, prod_cantidad) (
         select COMPRA_NUMERO, PRODUCTO_CODIGO, 
-        (
-            select vari_id from ForAndIf.Variante
-            join Tipo_variante on vari_tipo = tiva_id
-            where tiva_nombre = PRODUCTO_TIPO_VARIANTE and vari_valor = PRODUCTO_VARIANTE
-        )
-        , COMPRA_PRODUCTO_PRECIO, sum(COMPRA_PRODUCTO_CANTIDAD)
+        ForAndIf.obtener_id_variante(PRODUCTO_VARIANTE, PRODUCTO_TIPO_VARIANTE),
+        COMPRA_PRODUCTO_PRECIO, sum(COMPRA_PRODUCTO_CANTIDAD)
         from gd_esquema.Maestra
         where COMPRA_NUMERO is not null and PRODUCTO_CODIGO is not null and PRODUCTO_TIPO_VARIANTE is not null and PRODUCTO_VARIANTE is not null and COMPRA_PRODUCTO_PRECIO is not null and COMPRA_PRODUCTO_CANTIDAD is not null
         group by COMPRA_NUMERO, PRODUCTO_CODIGO, PRODUCTO_TIPO_VARIANTE, PRODUCTO_VARIANTE, COMPRA_PRODUCTO_PRECIO
@@ -347,6 +349,20 @@ begin
 end
 go
 
+
+create proc ForAndIf.migrar_venta_por_producto as
+begin
+    insert FordAndIf.Venta_por_producto (vent_codigo, prod_codigo, variante_id, prod_precio_unitario, prod_cantidad) (
+        select VENTA_CODIGO, PRODUCTO_CODIGO, ForAndIf.obtener_id_variante(PRODUCTO_VARIANTE, PRODUCTO_TIPO_VARIANTE),
+        VENTA_PRODUCTO_PRECIO, 
+        VENTA_PRODUCTO_CANTIDAD
+        from gd_esquema.Maestra
+        where VENTA_CODIGO is not null and PRODUCTO_CODIGO is not null and PRODUCTO_VARIANTE is not null AND PRODUCTO_TIPO_VARIANTE is not null and VENTA_PRODUCTO_PRECIO is not null and VENTA_PRODUCTO_CANTIDAD is not null
+        group by VENTA_CODIGO, PRODUCTO_CODIGO, PRODUCTO_VARIANTE, PRODUCTO_TIPO_VARIANTE, VENTA_PRODUCTO_PRECIO, VENTA_PRODUCTO_CANTIDAD   
+    )
+end
+go
+
 --INVOCACION PROCEDURES
 exec ForAndIf.migrar_tipo_variante
 exec ForAndIf.migrar_variante
@@ -367,6 +383,8 @@ exec ForAndIf.migrar_compra
 exec ForAndIf.migrar_producto_por_variante
 exec ForAndIf.migrar_compra_por_producto
 exec ForAndIf.migrar_venta
+exec ForAndIf.migrar_venta_por_producto
+
 -- select VENTA_MEDIO_ENVIO, VENTA_ENVIO_PRECIO from gd_esquema.Maestra
 -- where VENTA_MEDIO_ENVIO is not null and VENTA_ENVIO_PRECIO is not NULL
 -- group by VENTA_MEDIO_ENVIO, VENTA_ENVIO_PRECIO

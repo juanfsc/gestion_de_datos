@@ -1,4 +1,4 @@
-use GD2C2022
+-- use GD2C2022
 -- drop table ForAndIf.Descuento_por_venta
 -- drop table ForAndIf.Descuento
 -- drop table ForAndIf.Cupon_por_venta
@@ -36,8 +36,12 @@ use GD2C2022
 -- drop proc ForAndIf.migrar_envio_disponible_por_localidad_y_CP
 -- drop proc ForAndIf.migrar_medio_pago
 -- drop proc ForAndIf.migrar_proveedor
-
 -- drop proc ForAndIf.migrar_cliente
+-- drop proc ForAndIf.migrar_compra
+-- drop proc ForAndIf.migrar_producto_por_variante
+-- drop proc ForAndIf.migrar_compra_por_producto
+-- drop proc ForAndIf.migrar_venta
+-- drop proc ForAndIf.migrar_venta_por_producto
 -- drop function ForAndIf.obtener_id_provincia
 -- drop function ForAndIf.obtener_id_localidad
 -- drop schema ForAndIf
