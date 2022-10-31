@@ -31,6 +31,52 @@ begin
 end
 go
 
+
+create function ForAndIf.suma_descuento_importe_medio_pago (@medi_pago nvarchar(255)) returns decimal(18, 2) as
+begin
+    declare @suma decimal(18, 2)
+    set @suma = (select sum(VENTA_DESCUENTO_IMPORTE) from gd_esquema.Maestra
+                where VENTA_DESCUENTO_CONCEPTO = @medi_pago)
+                return @suma
+end
+go
+
+create function ForAndIf.suma_consumo_medio_pago (@medi_pago nvarchar(255)) returns decimal(18, 2) as
+begin
+    declare @suma decimal(18, 2)
+    set @suma = (select sum(prod_cantidad * prod_precio_unitario) from ForAndIf.Venta v1
+                join ForAndIf.Venta_por_producto v2 on v1.vent_codigo = v2.vent_codigo
+                where v1.vent_codigo in (
+                    select VENTA_CODIGO from gd_esquema.Maestra
+                    where VENTA_DESCUENTO_CONCEPTO = @medi_pago))
+    return @suma
+end
+go
+
+create function ForAndIf.porcentaje_medio_pago (@medi_pago nvarchar(255)) returns decimal(18, 2) as
+begin
+
+    return  isnull(ForAndIf.suma_descuento_importe_medio_pago (@medi_pago) / ForAndIf.suma_consumo_medio_pago (@medi_pago),0)
+end
+go
+
+create function ForAndIf.id_descuento (@desc_concepto nvarchar(50)) returns decimal(18, 0) as
+begin
+    declare @id decimal(18, 0)
+    set @id = (select desc_id from ForAndIf.Descuento
+    where desc_concepto = @desc_concepto)
+    return @id
+end
+go
+
+create function ForAndIf.porcentaje_descuento (@id decimal(19, 0), @desc_importe decimal(18, 2)) returns decimal(18, 2) as
+begin
+    declare @porcentaje decimal(18, 2)
+    set @porcentaje = @desc_importe / (select vent_total from ForAndIf.Venta where vent_codigo = @id) 
+    return @porcentaje
+end
+go
+
 ---DEFINICION PROCEDURES
 create proc ForAndIf.migrar_tipo_variante as
 begin
@@ -374,18 +420,39 @@ begin
 end
 go
 
--- TODO: modificar tabla medio de pago para agregar descuento de medio de pago
-select medi_pago, (
-    select sum(VENTA_DESCUENTO_IMPORTE) from gd_esquema.Maestra
-    where VENTA_DESCUENTO_CONCEPTO = medi_pago
-) / (
-    select sum(prod_cantidad * prod_precio_unitario) from ForAndIf.Venta v1
-    join ForAndIf.Venta_por_producto v2 on v1.vent_codigo = v2.vent_codigo
-    where v1.vent_codigo in (
-        select VENTA_CODIGO from gd_esquema.Maestra
-        where VENTA_DESCUENTO_CONCEPTO = medi_pago
+create proc ForAndIf.migrar_descuento_por_venta as
+begin    
+    insert ForAndIf.Descuento_por_venta (vent_codigo, desc_id, desc_importe) (   
+        select VENTA_CODIGO,
+        ForAndIf.id_descuento(VENTA_DESCUENTO_CONCEPTO),
+        VENTA_DESCUENTO_IMPORTE
+        from gd_esquema.Maestra
+        where VENTA_CODIGO is not null and VENTA_DESCUENTO_CONCEPTO is not null
+        group by VENTA_CODIGO, VENTA_DESCUENTO_CONCEPTO, VENTA_DESCUENTO_IMPORTE
     )
-) from ForAndIf.Medio_Pago
+end
+go
+
+create proc ForAndIf.migrar_descuento_compra as
+begin    
+    insert ForAndIf.Descuento_Compra(desc_codigo, desc_valor, comp_numero) (   
+        select DESCUENTO_COMPRA_CODIGO,
+        round(COMPRA_TOTAL*DESCUENTO_COMPRA_VALOR,2),
+        COMPRA_NUMERO
+        from gd_esquema.Maestra
+        where DESCUENTO_COMPRA_CODIGO is not null and COMPRA_TOTAL is not null and COMPRA_NUMERO is not null
+        group by DESCUENTO_COMPRA_CODIGO, DESCUENTO_COMPRA_VALOR, COMPRA_TOTAL, COMPRA_NUMERO
+    )
+	
+end
+go
+
+
+create proc ForAndIf.actualizar_medio_pago as
+begin
+    update ForAndIf.Medio_Pago set medi_porcentaje_descuento = ForAndIf.porcentaje_medio_pago (medi_pago)
+end
+go
 
 --INVOCACION PROCEDURES
 exec ForAndIf.migrar_tipo_variante
@@ -409,7 +476,6 @@ exec ForAndIf.migrar_compra_por_producto
 exec ForAndIf.migrar_venta
 exec ForAndIf.migrar_venta_por_producto
 exec ForAndIf.migrar_cupon_por_venta
-
--- select VENTA_MEDIO_ENVIO, VENTA_ENVIO_PRECIO from gd_esquema.Maestra
--- where VENTA_MEDIO_ENVIO is not null and VENTA_ENVIO_PRECIO is not NULL
--- group by VENTA_MEDIO_ENVIO, VENTA_ENVIO_PRECIO
+exec ForAndIf.migrar_descuento_por_venta
+exec ForAndIf.migrar_descuento_compra
+exec ForAndIf.actualizar_medio_pago
