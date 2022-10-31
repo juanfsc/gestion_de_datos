@@ -44,8 +44,8 @@ use GD2C2022
 -- go
 
 
-create schema ForAndIf
-GO
+-- create schema ForAndIf
+-- GO
 
 create table ForAndIf.Cliente (
    clie_id decimal(18, 0) not null identity(1, 1),
@@ -108,6 +108,7 @@ create table ForAndIf.Venta (
    vent_medio_pago decimal(18, 0) not null,
    vent_medio_pago_costo decimal(18, 2) not null,
    vent_canal decimal(18, 0) not null,
+   vent_canal_costo decimal(18, 0) not null
 )
 
 create table ForAndIf.Descuento (

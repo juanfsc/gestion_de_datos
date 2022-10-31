@@ -299,7 +299,6 @@ begin
 end
 go
 
--- No se puede ejecutar hasta que no esté hecho migrar_producto_por_variante
 create proc ForAndIf.migrar_compra_por_producto as
 begin
     insert ForAndIf.Compra_por_producto (comp_numero, prod_codigo, vari_id, prod_precio_unitario, prod_cantidad) (
@@ -313,6 +312,37 @@ begin
         from gd_esquema.Maestra
         where COMPRA_NUMERO is not null and PRODUCTO_CODIGO is not null and PRODUCTO_TIPO_VARIANTE is not null and PRODUCTO_VARIANTE is not null and COMPRA_PRODUCTO_PRECIO is not null and COMPRA_PRODUCTO_CANTIDAD is not null
         group by COMPRA_NUMERO, PRODUCTO_CODIGO, PRODUCTO_TIPO_VARIANTE, PRODUCTO_VARIANTE, COMPRA_PRODUCTO_PRECIO
+    )
+end
+go
+
+create proc ForAndIf.migrar_venta as
+begin
+    insert ForAndIf.Venta (vent_codigo, vent_fecha, vent_cliente, vent_envio, vent_medio_pago, vent_medio_pago_costo, vent_canal, vent_canal_costo) (
+        select VENTA_CODIGO, VENTA_FECHA,
+        (
+            select clie_id from ForAndIf.Cliente
+            where clie_dni = CLIENTE_DNI
+            and clie_nombre = CLIENTE_NOMBRE
+            and clie_apellido = CLIENTE_APELLIDO
+        ),
+        (
+            select envi_medio from ForAndIf.Envio
+            where envi_nombre = VENTA_MEDIO_ENVIO
+        ),
+        (
+            select medi_id from ForAndIf.Medio_Pago
+            where medi_pago = VENTA_MEDIO_PAGO
+        ), 
+        VENTA_MEDIO_PAGO_COSTO, 
+        (
+            select cana_id from ForAndIf.Canal
+            where cana_nombre = VENTA_CANAL
+        ),
+        VENTA_CANAL_COSTO
+        from gd_esquema.Maestra
+        where VENTA_CODIGO is not null and VENTA_FECHA is not null and CLIENTE_DNI is not null and CLIENTE_NOMBRE is not null and CLIENTE_APELLIDO is not null and VENTA_MEDIO_ENVIO is not null and VENTA_MEDIO_PAGO is not null and VENTA_MEDIO_PAGO_COSTO is not null and VENTA_CANAL is not null and VENTA_CANAL_COSTO is not null
+        group by VENTA_CODIGO, VENTA_FECHA, CLIENTE_DNI, CLIENTE_NOMBRE, CLIENTE_APELLIDO, VENTA_MEDIO_ENVIO, VENTA_MEDIO_PAGO, VENTA_MEDIO_PAGO_COSTO, VENTA_CANAL, VENTA_CANAL_COSTO
     )
 end
 go
@@ -336,6 +366,7 @@ exec ForAndIf.migrar_cliente
 exec ForAndIf.migrar_compra
 exec ForAndIf.migrar_producto_por_variante
 exec ForAndIf.migrar_compra_por_producto
+exec ForAndIf.migrar_venta
 -- select VENTA_MEDIO_ENVIO, VENTA_ENVIO_PRECIO from gd_esquema.Maestra
 -- where VENTA_MEDIO_ENVIO is not null and VENTA_ENVIO_PRECIO is not NULL
 -- group by VENTA_MEDIO_ENVIO, VENTA_ENVIO_PRECIO
