@@ -164,7 +164,8 @@ create table FOR_AND_IF.Cupon (
 )
 go
 
---Primary Keys
+--PRIMARY KEYS
+
 alter table FOR_AND_IF.Cliente add constraint pk_cliente primary key (clie_id)
 alter table FOR_AND_IF.Provincia add constraint pk_provincia primary key (prov_id)
 alter table FOR_AND_IF.Compra add constraint pk_compra primary key (comp_numero)
@@ -188,7 +189,9 @@ alter table FOR_AND_IF.Cupon_por_venta add constraint pk_cupon_por_venta primary
 alter table FOR_AND_IF.Cupon add constraint pk_cupon primary key (cupo_codigo)
 alter table FOR_AND_IF.Envio_disponible_por_localidad_y_CP add constraint pk_envio_disponible_por_localidad_y_cp primary key (envi_cp_medio, envi_cp_localidad, envi_cp_postal)
 go
---Foreign Keys
+
+--FOREIGN KEYS
+
 alter table FOR_AND_IF.Localidad add constraint fk_loca_provincia foreign key (loca_provincia)
 	references FOR_AND_IF.Provincia (prov_id)
 alter table FOR_AND_IF.Localidad_por_CP add constraint fk_localidad_por_cp_loca_id foreign key (loca_id)
@@ -245,8 +248,9 @@ alter table FOR_AND_IF.Proveedor add constraint fk_prov_localidad foreign key (p
    references FOR_AND_IF.Localidad (loca_id)
 alter table FOR_AND_IF.Proveedor add constraint fk_prov_cp foreign key (prov_codigo_postal)
    references FOR_AND_IF.CP (codi_postal)
----DEFINICION FUNCTIONS
 GO
+
+--DEFINICIÓN FUNCTIONS
 
 create function FOR_AND_IF.obtener_id_provincia (@prov_nombre nvarchar(255)) RETURNS decimal(18, 0) AS
 begin
@@ -306,7 +310,7 @@ begin
 end
 go
 
----DEFINICION PROCEDURES
+--DEFINICIÓN PROCEDURES
 create proc FOR_AND_IF.migrar_tipo_variante as
 begin
     insert FOR_AND_IF.Tipo_variante (tiva_nombre) (
@@ -656,9 +660,8 @@ begin
     update FOR_AND_IF.Medio_Pago set medi_porcentaje_descuento = FOR_AND_IF.porcentaje_medio_pago (medi_pago)
 end
 go
-select * from FOR_AND_IF.Medio_Pago
 
---INVOCACION PROCEDURES
+--INVOCACIÓN PROCEDURES
 exec FOR_AND_IF.migrar_tipo_variante
 exec FOR_AND_IF.migrar_variante
 exec FOR_AND_IF.migrar_producto
