@@ -69,11 +69,6 @@ create table FOR_AND_IF.Venta (
    vent_total decimal(18, 2) not null
 )
 
-create table FOR_AND_IF.Descuento (
-   desc_id decimal(18, 0) not null identity(1, 1),
-   desc_concepto nvarchar(50) not null
-)
-
 create table FOR_AND_IF.Compra (
    comp_numero decimal(19,0) not null,
    comp_fecha date not null,
@@ -82,10 +77,10 @@ create table FOR_AND_IF.Compra (
    comp_total decimal(18,2) not null,
 )
 
-create table FOR_AND_IF.Descuento_por_venta (
+create table FOR_AND_IF.Descuento_especial (
+   desc_id decimal(18, 0) not null identity(1, 1),
+   desc_importe decimal(18, 2) not null,
    vent_codigo decimal(19, 0) not null,
-   desc_id decimal(18, 0) not null,
-   desc_importe decimal(18, 2) not null
 )
 
 create table FOR_AND_IF.Descuento_Compra (
@@ -176,9 +171,8 @@ alter table FOR_AND_IF.Compra add constraint pk_compra primary key (comp_numero)
 alter table FOR_AND_IF.Localidad add constraint pk_localidad primary key (loca_id)
 alter table FOR_AND_IF.Localidad_por_CP add constraint pk_loca_id_codi_postal primary key (loca_id, codi_postal)
 alter table FOR_AND_IF.CP add constraint pk_codi_postal primary key (codi_postal)
-alter table FOR_AND_IF.Descuento_por_venta add constraint pk_descuento_por_venta primary key (vent_codigo, desc_id)
+alter table FOR_AND_IF.Descuento_especial add constraint pk_Descuento_especial primary key (desc_id)
 alter table FOR_AND_IF.Envio add constraint pk_envio primary key (envi_medio)
-alter table FOR_AND_IF.Descuento add constraint pk_descuento primary key (desc_id)
 alter table FOR_AND_IF.Canal add constraint pk_canal primary key (cana_id)
 alter table FOR_AND_IF.Venta add constraint pk_venta primary key (vent_codigo)
 alter table FOR_AND_IF.Medio_Pago add constraint pk_medio_pago primary key (medi_id)
@@ -211,10 +205,8 @@ alter table FOR_AND_IF.Cliente add constraint fk_clie_provincia foreign key (cli
 	references FOR_AND_IF.Provincia (prov_id)
 alter table FOR_AND_IF.Cliente add constraint fk_clie_localidad foreign key (clie_localidad)
 	references FOR_AND_IF.Localidad (loca_id)
-alter table FOR_AND_IF.Descuento_por_venta add constraint fk_descuento_hacia_venta foreign key (vent_codigo)
+alter table FOR_AND_IF.Descuento_especial add constraint fk_descuento_hacia_venta foreign key (vent_codigo)
 	references FOR_AND_IF.Venta (vent_codigo)
-alter table FOR_AND_IF.Descuento_por_venta add constraint fk_venta_hacia_descuento foreign key (desc_id)
-	references FOR_AND_IF.Descuento (desc_id)
 alter table FOR_AND_IF.Descuento_Compra add constraint fk_descuento_compra_compra foreign key (comp_numero)
 	references FOR_AND_IF.Compra (comp_numero)
 alter table FOR_AND_IF.Compra add constraint fk_compra_proveedor foreign key (comp_proveedor)
@@ -311,15 +303,6 @@ create function FOR_AND_IF.porcentaje_medio_pago (@medi_pago nvarchar(255)) retu
 begin
 
     return  isnull(FOR_AND_IF.suma_descuento_importe_medio_pago (@medi_pago) / FOR_AND_IF.suma_consumo_medio_pago (@medi_pago),0)
-end
-go
-
-create function FOR_AND_IF.id_descuento (@desc_concepto nvarchar(50)) returns decimal(18, 0) as
-begin
-    declare @id decimal(18, 0)
-    set @id = (select desc_id from FOR_AND_IF.Descuento
-    where desc_concepto = @desc_concepto)
-    return @id
 end
 go
 
@@ -457,15 +440,6 @@ begin
     ), PROVEEDOR_CODIGO_POSTAL from gd_esquema.Maestra
     where PROVEEDOR_LOCALIDAD is not null and PROVEEDOR_CODIGO_POSTAL is not null
     group by PROVEEDOR_LOCALIDAD, PROVEEDOR_CODIGO_POSTAL, PROVEEDOR_PROVINCIA
-    )
-end
-go
-
-create proc FOR_AND_IF.migrar_descuento as
-begin
-    insert FOR_AND_IF.Descuento (desc_concepto) (
-        select distinct VENTA_DESCUENTO_CONCEPTO from gd_esquema.Maestra
-        where VENTA_DESCUENTO_CONCEPTO IS NOT NULL
     )
 end
 go
@@ -674,14 +648,13 @@ begin
 end
 go
 
-create proc FOR_AND_IF.migrar_descuento_por_venta as
+create proc FOR_AND_IF.migrar_Descuento_especial as
 begin    
-    insert FOR_AND_IF.Descuento_por_venta (vent_codigo, desc_id, desc_importe) (   
+    insert FOR_AND_IF.Descuento_especial (vent_codigo, desc_importe) (   
         select VENTA_CODIGO,
-        FOR_AND_IF.id_descuento(VENTA_DESCUENTO_CONCEPTO),
         VENTA_DESCUENTO_IMPORTE
         from gd_esquema.Maestra
-        where VENTA_CODIGO is not null and VENTA_DESCUENTO_CONCEPTO is not null
+        where VENTA_CODIGO is not null and VENTA_DESCUENTO_CONCEPTO = 'Otros'
         group by VENTA_CODIGO, VENTA_DESCUENTO_CONCEPTO, VENTA_DESCUENTO_IMPORTE)
 end
 go
@@ -704,6 +677,7 @@ begin
     update FOR_AND_IF.Medio_Pago set medi_porcentaje_descuento = FOR_AND_IF.porcentaje_medio_pago (medi_pago)
 end
 go
+select * from FOR_AND_IF.Medio_Pago
 
 --INVOCACION PROCEDURES
 exec FOR_AND_IF.migrar_tipo_variante
@@ -727,6 +701,6 @@ exec FOR_AND_IF.migrar_compra_por_producto
 exec FOR_AND_IF.migrar_venta
 exec FOR_AND_IF.migrar_venta_por_producto
 exec FOR_AND_IF.migrar_cupon_por_venta
-exec FOR_AND_IF.migrar_descuento_por_venta
+exec FOR_AND_IF.migrar_Descuento_especial
 exec FOR_AND_IF.migrar_descuento_compra
 exec FOR_AND_IF.actualizar_medio_pago

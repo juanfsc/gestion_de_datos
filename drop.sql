@@ -1,8 +1,7 @@
 use GD2C2022
 go
 
-drop table FOR_AND_IF.Descuento_por_venta
-drop table FOR_AND_IF.Descuento
+drop table FOR_AND_IF.Descuento_especial
 drop table FOR_AND_IF.Cupon_por_venta
 drop table FOR_AND_IF.Cupon
 drop table FOR_AND_IF.Compra_por_producto
@@ -36,7 +35,6 @@ drop proc FOR_AND_IF.migrar_descuento
 drop proc FOR_AND_IF.migrar_canal
 drop proc FOR_AND_IF.migrar_envio
 drop proc FOR_AND_IF.migrar_envio_disponible_por_localidad_y_CP
-drop proc FOR_AND_IF.migrar_envio_disponible_por_CP
 drop proc FOR_AND_IF.migrar_medio_pago
 drop proc FOR_AND_IF.migrar_proveedor
 drop proc FOR_AND_IF.migrar_cliente
@@ -46,7 +44,7 @@ drop proc FOR_AND_IF.migrar_compra_por_producto
 drop proc FOR_AND_IF.migrar_venta
 drop proc FOR_AND_IF.migrar_venta_por_producto
 drop proc FOR_AND_IF.migrar_cupon_por_venta
-drop proc FOR_AND_IF.migrar_descuento_por_venta
+drop proc FOR_AND_IF.migrar_Descuento_especial
 drop proc FOR_AND_IF.migrar_descuento_compra
 drop proc FOR_AND_IF.actualizar_medio_pago
 drop function FOR_AND_IF.obtener_id_provincia
@@ -56,7 +54,6 @@ drop function FOR_AND_IF.suma_descuento_importe_medio_pago
 drop function FOR_AND_IF.suma_consumo_medio_pago 
 drop function FOR_AND_IF.suma_importe_descuento
 drop function FOR_AND_IF.porcentaje_medio_pago
-drop function FOR_AND_IF.id_descuento
 drop function FOR_AND_IF.porcentaje_descuento
 drop schema FOR_AND_IF
 go
