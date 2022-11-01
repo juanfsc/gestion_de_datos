@@ -670,7 +670,6 @@ exec FOR_AND_IF.migrar_localidad
 exec FOR_AND_IF.migrar_cupon
 exec FOR_AND_IF.migrar_CP
 exec FOR_AND_IF.migrar_localidad_por_CP
-exec FOR_AND_IF.migrar_descuento
 exec FOR_AND_IF.migrar_canal
 exec FOR_AND_IF.migrar_envio
 exec FOR_AND_IF.migrar_envio_disponible_por_localidad_y_CP
