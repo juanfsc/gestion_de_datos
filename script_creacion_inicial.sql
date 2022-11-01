@@ -306,14 +306,6 @@ begin
 end
 go
 
-create function FOR_AND_IF.porcentaje_descuento (@id decimal(19, 0), @desc_importe decimal(18, 2)) returns decimal(18, 2) as
-begin
-    declare @porcentaje decimal(18, 2)
-    set @porcentaje = @desc_importe / (select vent_total from FOR_AND_IF.Venta where vent_codigo = @id) 
-    return @porcentaje
-end
-go
-
 ---DEFINICION PROCEDURES
 create proc FOR_AND_IF.migrar_tipo_variante as
 begin
@@ -475,19 +467,6 @@ begin
         FOR_AND_IF.obtener_id_localidad(CLIENTE_PROVINCIA, CLIENTE_LOCALIDAD),
         CLIENTE_CODIGO_POSTAL,
         VENTA_ENVIO_PRECIO,
-        /*(
-            select top 1 VENTA_ENVIO_PRECIO from gd_esquema.Maestra m2
-            where m1.CLIENTE_CODIGO_POSTAL = m2.CLIENTE_CODIGO_POSTAL
-            and m1.VENTA_MEDIO_ENVIO = m2.VENTA_MEDIO_ENVIO
-            order by VENTA_FECHA desc
-        )
-        CHEQUEAR CADENA DE MAILS:https://groups.google.com/u/0/g/gestiondedatos/c/qTmHCd7HjTE?hl=es
-        NO HACE FALTA ESTA SUBQUERY PORQUE NO EXISTEN MULTIPLES PRECIOS PARA UN CODIGO POSTAL Y MEDIO ENVIO, VALIDADO CON LA QUERY:
-        select CLIENTE_PROVINCIA, CLIENTE_LOCALIDAD, CLIENTE_CODIGO_POSTAL, VENTA_MEDIO_ENVIO  from gd_esquema.Maestra
-        group by CLIENTE_PROVINCIA, CLIENTE_LOCALIDAD, CLIENTE_CODIGO_POSTAL, VENTA_MEDIO_ENVIO 
-        HAVING COUNT(DISTINCT VENTA_ENVIO_PRECIO)>1
-        ORDER BY CLIENTE_CODIGO_POSTAL
-        */
         NULL from gd_esquema.Maestra m1
         where VENTA_MEDIO_ENVIO is not null and CLIENTE_LOCALIDAD is not null and CLIENTE_CODIGO_POSTAL is not null and VENTA_ENVIO_PRECIO is not null 
         group by VENTA_MEDIO_ENVIO, CLIENTE_CODIGO_POSTAL, CLIENTE_LOCALIDAD, CLIENTE_PROVINCIA, VENTA_ENVIO_PRECIO
