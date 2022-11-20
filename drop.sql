@@ -1,6 +1,6 @@
 use GD2C2022
 go
-
+--INICIAL
 drop table FOR_AND_IF.Descuento_especial
 drop table FOR_AND_IF.Cupon_por_venta
 drop table FOR_AND_IF.Cupon
@@ -55,5 +55,22 @@ drop function FOR_AND_IF.suma_consumo_medio_pago
 drop function FOR_AND_IF.suma_importe_descuento
 drop function FOR_AND_IF.porcentaje_medio_pago
 drop function FOR_AND_IF.porcentaje_descuento
+go
+
+--BI
+drop table FOR_AND_IF.Hechos_Compras
+drop table FOR_AND_IF.Hechos_Ventas
+drop table FOR_AND_IF.Dimension_tiempo
+drop table FOR_AND_IF.Dimension_provincia
+drop table FOR_AND_IF.Dimension_producto
+drop proc FOR_AND_IF.migrar_dimension_tiempo
+drop proc FOR_AND_IF.migrar_dimension_provincia
+drop proc FOR_AND_IF.migrar_dimension_producto
+drop proc FOR_AND_IF.migrar_hechos_ventas
+drop proc FOR_AND_IF.migrar_hechos_compras
+drop function FOR_AND_IF.obtener_id_tiempo
+go
+
 drop schema FOR_AND_IF
+
 go
