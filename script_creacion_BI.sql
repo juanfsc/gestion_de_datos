@@ -127,8 +127,9 @@ exec FOR_AND_IF.migrar_dimension_provincia
 exec FOR_AND_IF.migrar_dimension_producto
 exec FOR_AND_IF.migrar_hechos_ventas
 exec FOR_AND_IF.migrar_hechos_compras
+go
 
-
+-- Creacion VIEWS
 -- Las ganancias mensuales de cada canal de venta. 
 -- Se entiende por ganancias al total de las ventas, menos el total de las 
 -- compras, menos los costos de transacción totales aplicados asociados los 
@@ -136,27 +137,26 @@ exec FOR_AND_IF.migrar_hechos_compras
 
 -- select * from Hechos_Venta venta, Hechos_Compras compra
 -- group by venta.dime_tiempo
--- Los 5 productos con mayor rentabilidad anual, con sus respectivos %
--- Se entiende por rentabilidad a los ingresos generados por el producto
--- (ventas) durante el periodo menos la inversión realizada en el producto
--- (compras) durante el periodo, todo esto sobre dichos ingresos.
--- Valor expresado en porcentaje.
--- Para simplificar, no es necesario tener en cuenta los descuentos aplicados. 
 
+
+create view FOR_AND_IF.Top_5_productos_ultimo_anio (producto, rentabilidad) as
 select top 5 dime_producto, (sum(cantidad_vendida * precio_unitario) - 
 (
     select sum(cantidad_comprada * precio_unitario) from FOR_AND_IF.Hechos_Compras
     join FOR_AND_IF.Dimension_tiempo on dime_tiempo = dime_tiempo_id
-    where anio = 2022
+    where anio = (select max(anio) from FOR_AND_IF.Dimension_tiempo)
     and Hechos_compras.dime_producto = Hechos_ventas.dime_producto
 )) / sum(cantidad_vendida * precio_unitario) from FOR_AND_IF.Hechos_Ventas
 join FOR_AND_IF.Dimension_tiempo on dime_tiempo = dime_tiempo_id
-where anio = 2022
+where anio = (select max(anio) from FOR_AND_IF.Dimension_tiempo)
 group by dime_producto
 order by (sum(cantidad_vendida * precio_unitario) - 
 (
     select sum(cantidad_comprada * precio_unitario) from FOR_AND_IF.Hechos_Compras
     join FOR_AND_IF.Dimension_tiempo on dime_tiempo = dime_tiempo_id
-    where anio = 2022
+    where anio = (select max(anio) from FOR_AND_IF.Dimension_tiempo)
     and Hechos_compras.dime_producto = Hechos_ventas.dime_producto
 )) / sum(cantidad_vendida * precio_unitario) desc
+GO
+
+select * from FOR_AND_IF.Top_5_productos_ultimo_anio 
