@@ -1,5 +1,6 @@
 use GD2C2022
 go
+--TABLAS
 
 create table FOR_AND_IF.Dimension_tiempo (
    dime_tiempo_id decimal(18, 0) not null identity(1, 1),
@@ -18,9 +19,15 @@ create table FOR_AND_IF.Dimension_producto (
     prod_categoria nvarchar(255) not null
 )
 
+create table FOR_AND_IF.Dimension_cliente_rango_etario (
+    dime_cliente_rango_id decimal(18,0) not null identity(1,1),
+    rango_etario char(8) not null
+)
+
 create table FOR_AND_IF.Hechos_Ventas (
     dime_tiempo decimal(18, 0) not null,
     dime_producto nvarchar(50) not null,
+	dime_rango_etario decimal(18, 0) not null,
     cantidad_vendida decimal(18, 0) not null,
     precio_unitario decimal(18, 2) not null
 )
@@ -37,7 +44,8 @@ create table FOR_AND_IF.Hechos_Compras (
 alter table FOR_AND_IF.Dimension_tiempo add constraint pk_dimension_tiempo primary key (dime_tiempo_id)
 alter table FOR_AND_IF.Dimension_provincia add constraint pk_dimension_provincia primary key (dime_provincia_id)
 alter table FOR_AND_IF.Dimension_producto add constraint pk_dimension_producto primary key (dime_producto_id)
-alter table FOR_AND_IF.Hechos_Ventas add constraint pk_hechos_ventas primary key (dime_tiempo, dime_producto)
+alter table FOR_AND_IF.Dimension_cliente_rango_etario add constraint pk_dimension_cliente_rango_etario primary key (dime_cliente_rango_id) 
+alter table FOR_AND_IF.Hechos_Ventas add constraint pk_hechos_ventas primary key (dime_tiempo, dime_producto,dime_rango_etario)
 alter table FOR_AND_IF.Hechos_Compras add constraint pk_hechos_compras primary key (dime_tiempo, dime_producto)
 
 go
@@ -46,11 +54,13 @@ go
 
 alter table FOR_AND_IF.Hechos_Ventas add constraint fk_hechos_ventas_dimension_tiempo foreign key (dime_tiempo)
     references FOR_AND_IF.Dimension_tiempo (dime_tiempo_id)
-alter table FOR_AND_IF.Hechos_Compras add constraint fk_hechos_compras_dimension_tiempo foreign key (dime_tiempo)
-    references FOR_AND_IF.Dimension_tiempo (dime_tiempo_id)
-    
 alter table FOR_AND_IF.Hechos_Ventas add constraint fk_hechos_ventas_dimension_producto foreign key (dime_producto)
     references FOR_AND_IF.Dimension_producto (dime_producto_id)
+alter table FOR_AND_IF.Hechos_Ventas add constraint fk_hechos_ventas_dimension_rango_etario foreign key (dime_rango_etario)
+    references FOR_AND_IF.Dimension_cliente_rango_etario (dime_cliente_rango_id)
+
+alter table FOR_AND_IF.Hechos_Compras add constraint fk_hechos_compras_dimension_tiempo foreign key (dime_tiempo)
+    references FOR_AND_IF.Dimension_tiempo (dime_tiempo_id)
 alter table FOR_AND_IF.Hechos_Compras add constraint fk_hechos_compras_dimension_producto foreign key (dime_producto)
     references FOR_AND_IF.Dimension_producto (dime_producto_id)
 go
@@ -65,6 +75,32 @@ begin
     )
 end
 go
+
+create function FOR_AND_IF.obtener_rango_etario(@fecha date) returns char(8) as
+begin
+    return (
+		case
+			when year(GETDATE())-year(@fecha) <= 25 then 'joven' 
+			when year(GETDATE())-year(@fecha) > 25 and year(GETDATE())-year(@fecha) <= 35 then 'adulto' 
+			when year(GETDATE())-year(@fecha) > 35 and year(GETDATE())-year(@fecha) <= 55 then 'abuelo' 
+			when year(GETDATE())-year(@fecha) > 55then 'jubilado'
+		end
+    )
+end
+go
+
+create function FOR_AND_IF.obtener_rango_etario_id(@fecha date) returns char(8) as
+begin
+    return (
+		select dime_cliente_rango_id
+		from FOR_AND_IF.Dimension_cliente_rango_etario
+		where rango_etario=FOR_AND_IF.obtener_rango_etario(@fecha)
+	)
+end
+go
+
+
+
 
 --DEFINICIÓN PROCEDURES
 
@@ -97,14 +133,26 @@ begin
 end
 go
 
+create proc FOR_AND_IF.migrar_dimension_cliente_rango_etario as
+begin
+    insert FOR_AND_IF.Dimension_cliente_rango_etario (rango_etario) (
+        select FOR_AND_IF.obtener_rango_etario(clie_fecha_nac)
+        from FOR_AND_IF.Cliente
+		group by FOR_AND_IF.obtener_rango_etario(clie_fecha_nac)
+	)
+end
+go
+
 create proc FOR_AND_IF.migrar_hechos_ventas as
 begin
-    insert FOR_AND_IF.Hechos_Ventas (dime_tiempo, dime_producto, cantidad_vendida, precio_unitario) (
-        select FOR_AND_IF.obtener_id_tiempo(vent_fecha), prod_codigo, sum(prod_cantidad),
+    insert FOR_AND_IF.Hechos_Ventas (dime_tiempo, dime_producto, dime_rango_etario, cantidad_vendida, precio_unitario) (
+        select FOR_AND_IF.obtener_id_tiempo(vent_fecha), prod_codigo, FOR_AND_IF.obtener_rango_etario_id(clie_fecha_nac), sum(prod_cantidad),
         sum(prod_cantidad * prod_precio_unitario)/sum(prod_cantidad)
-        from FOR_AND_IF.Venta join FOR_AND_IF.Venta_por_producto 
+        from FOR_AND_IF.Venta join FOR_AND_IF.Venta_por_producto
         on FOR_AND_IF.Venta.vent_codigo=FOR_AND_IF.Venta_por_producto.vent_codigo
-        group by FOR_AND_IF.obtener_id_tiempo(vent_fecha), prod_codigo
+		join FOR_AND_IF.Cliente on vent_cliente=clie_id
+        group by FOR_AND_IF.obtener_id_tiempo(vent_fecha),FOR_AND_IF.obtener_rango_etario_id(clie_fecha_nac), prod_codigo
+		having prod_codigo='00DIS3H6HAPQ7JCJO'
     )
 end
 go
@@ -121,23 +169,18 @@ begin
 end
 go
 
+
+
 --INVOCACIÓN PROCEDURES
 exec FOR_AND_IF.migrar_dimension_tiempo
 exec FOR_AND_IF.migrar_dimension_provincia
 exec FOR_AND_IF.migrar_dimension_producto
+exec FOR_AND_IF.migrar_dimension_cliente_rango_etario
 exec FOR_AND_IF.migrar_hechos_ventas
 exec FOR_AND_IF.migrar_hechos_compras
 go
 
 -- Creacion VIEWS
--- Las ganancias mensuales de cada canal de venta. 
--- Se entiende por ganancias al total de las ventas, menos el total de las 
--- compras, menos los costos de transacción totales aplicados asociados los 
--- medios de pagos utilizados en las mismas. 
-
--- select * from Hechos_Venta venta, Hechos_Compras compra
--- group by venta.dime_tiempo
-
 
 create view FOR_AND_IF.Top_5_productos_ultimo_anio (producto, rentabilidad) as
 select top 5 dime_producto, (sum(cantidad_vendida * precio_unitario) - 
@@ -158,5 +201,12 @@ order by (sum(cantidad_vendida * precio_unitario) -
     and Hechos_compras.dime_producto = Hechos_ventas.dime_producto
 )) / sum(cantidad_vendida * precio_unitario) desc
 GO
+
+
+create view FOR_AND_IF.Top_5_categorias_mas_vendidad_por_rango_etario_por_mes (producto, rentabilidad) as
+select top 5 prod_categoria, mes from FOR_AND_IF.Hechos_Ventas join FOR_AND_IF.Dimension_producto on dime_producto=dime_producto_id join FOR_AND_IF.Dimension_tiempo on dime_tiempo=dime_tiempo_id
+GO
+
+--Ejecucion VIEWS
 
 select * from FOR_AND_IF.Top_5_productos_ultimo_anio 

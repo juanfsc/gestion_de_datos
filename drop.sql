@@ -63,12 +63,16 @@ drop table FOR_AND_IF.Hechos_Ventas
 drop table FOR_AND_IF.Dimension_tiempo
 drop table FOR_AND_IF.Dimension_provincia
 drop table FOR_AND_IF.Dimension_producto
+drop table FOR_AND_IF.Dimension_cliente_rango_etario
 drop proc FOR_AND_IF.migrar_dimension_tiempo
 drop proc FOR_AND_IF.migrar_dimension_provincia
 drop proc FOR_AND_IF.migrar_dimension_producto
+drop proc FOR_AND_IF.migrar_dimension_cliente_rango_etario
 drop proc FOR_AND_IF.migrar_hechos_ventas
 drop proc FOR_AND_IF.migrar_hechos_compras
 drop function FOR_AND_IF.obtener_id_tiempo
+drop view FOR_AND_IF.Top_5_productos_ultimo_anio
+drop view FOR_AND_IF.Top_5_categorias_mas_vendidad_por_rango_etario_por_mes
 go
 
 drop schema FOR_AND_IF
