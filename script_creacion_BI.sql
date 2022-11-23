@@ -204,9 +204,14 @@ GO
 
 
 create view FOR_AND_IF.Top_5_categorias_mas_vendidad_por_rango_etario_por_mes (producto, rentabilidad) as
-select top 5 prod_categoria, mes from FOR_AND_IF.Hechos_Ventas join FOR_AND_IF.Dimension_producto on dime_producto=dime_producto_id join FOR_AND_IF.Dimension_tiempo on dime_tiempo=dime_tiempo_id
+select top 5 prod_categoria, mes from FOR_AND_IF.Hechos_Ventas 
+join FOR_AND_IF.Dimension_producto on dime_producto=dime_producto_id
+join FOR_AND_IF.Dimension_tiempo on dime_tiempo=dime_tiempo_id
+group by prod_categoria, mes 
+order by sum(cantidad_vendida) desc
 GO
 
 --Ejecucion VIEWS
 
 select * from FOR_AND_IF.Top_5_productos_ultimo_anio 
+select * from FOR_AND_IF.Top_5_categorias_mas_vendidad_por_rango_etario_por_mes 
