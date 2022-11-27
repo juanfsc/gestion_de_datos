@@ -19,6 +19,11 @@ create table FOR_AND_IF.Dimension_producto (
     prod_categoria nvarchar(255) not null
 )
 
+create table FOR_AND_IF.Dimension_proveedor (
+    dime_proveedor_id nvarchar(50) not null,
+    prov_razon_social nvarchar(50) not null
+)
+
 create table FOR_AND_IF.Dimension_cliente_rango_etario (
     dime_cliente_rango_id decimal(18,0) not null identity(1,1),
     rango_etario char(8) not null
@@ -51,6 +56,7 @@ create table FOR_AND_IF.Hechos_Ventas (
 create table FOR_AND_IF.Hechos_Compras (
     dime_tiempo decimal(18, 0) not null,
     dime_producto nvarchar(50) not null,
+    dime_proveedor nvarchar(50) not null,
     cantidad_comprada decimal(18, 0) not null,
     precio_unitario decimal(18, 2) not null
 )
@@ -63,8 +69,9 @@ alter table FOR_AND_IF.Dimension_producto add constraint pk_dimension_producto p
 alter table FOR_AND_IF.Dimension_cliente_rango_etario add constraint pk_dimension_cliente_rango_etario primary key (dime_cliente_rango_id)
 alter table FOR_AND_IF.Dimension_medio_de_pago add constraint pk_dimension_medio_de_pago primary key (dime_medio_de_pago_id)
 alter table FOR_AND_IF.Dimension_descuento add constraint pk_dimension_descuento primary key (dime_desc_id)
+alter table FOR_AND_IF.Dimension_proveedor add constraint pk_dimension_proveedor primary key (dime_proveedor_id)
 alter table FOR_AND_IF.Hechos_Ventas add constraint pk_hechos_ventas primary key (dime_tiempo, dime_producto, dime_rango_etario, dime_medio_pago, dime_desc)
-alter table FOR_AND_IF.Hechos_Compras add constraint pk_hechos_compras primary key (dime_tiempo, dime_producto)
+alter table FOR_AND_IF.Hechos_Compras add constraint pk_hechos_compras primary key (dime_tiempo, dime_producto, dime_proveedor)
 go
 
 --FOREIGN KEYS
@@ -84,6 +91,8 @@ alter table FOR_AND_IF.Hechos_Compras add constraint fk_hechos_compras_dimension
     references FOR_AND_IF.Dimension_tiempo (dime_tiempo_id)
 alter table FOR_AND_IF.Hechos_Compras add constraint fk_hechos_compras_dimension_producto foreign key (dime_producto)
     references FOR_AND_IF.Dimension_producto (dime_producto_id)
+alter table FOR_AND_IF.Hechos_Compras add constraint fk_hechos_compras_dimension_proveedor foreign key (dime_proveedor)
+    references FOR_AND_IF.Dimension_proveedor (dime_proveedor_id)
 go
 
 --DEFINICIÓN FUNCIONES
@@ -191,6 +200,14 @@ begin
 end
 go
 
+create proc FOR_AND_IF.migrar_dimension_proveedor as
+begin
+    insert FOR_AND_IF.Dimension_proveedor (dime_proveedor_id, prov_razon_social) (
+        select prov_cuit, prov_razon_social from FOR_AND_IF.Proveedor
+    )
+end
+go
+
 create proc FOR_AND_IF.migrar_hechos_ventas as
 begin
     insert FOR_AND_IF.Hechos_Ventas (dime_tiempo, dime_producto, dime_rango_etario, dime_medio_pago, dime_desc, cantidad_vendida, precio_unitario) (
@@ -209,12 +226,13 @@ go
 
 create proc FOR_AND_IF.migrar_hechos_compras as
 begin
-    insert FOR_AND_IF.Hechos_Compras (dime_tiempo, dime_producto, cantidad_comprada, precio_unitario) (
-        select FOR_AND_IF.obtener_id_tiempo(comp_fecha), prod_codigo, sum(prod_cantidad),
+    insert FOR_AND_IF.Hechos_Compras (dime_tiempo, dime_producto, dime_proveedor, cantidad_comprada, precio_unitario) (
+        select FOR_AND_IF.obtener_id_tiempo(comp_fecha), prod_codigo, comp_proveedor,
+        sum(prod_cantidad),
         sum(prod_cantidad * prod_precio_unitario)/sum(prod_cantidad)
         from FOR_AND_IF.Compra join FOR_AND_IF.Compra_por_producto 
         on FOR_AND_IF.Compra.comp_numero=FOR_AND_IF.Compra_por_producto.comp_numero
-        group by FOR_AND_IF.obtener_id_tiempo(comp_fecha), prod_codigo
+        group by FOR_AND_IF.obtener_id_tiempo(comp_fecha), prod_codigo, comp_proveedor
     )
 end
 go
@@ -225,6 +243,7 @@ exec FOR_AND_IF.migrar_dimension_provincia
 exec FOR_AND_IF.migrar_dimension_producto
 exec FOR_AND_IF.migrar_dimension_cliente_rango_etario
 exec FOR_AND_IF.migrar_dimension_descuento
+exec FOR_AND_IF.migrar_dimension_proveedor
 exec FOR_AND_IF.migrar_hechos_ventas
 exec FOR_AND_IF.migrar_hechos_compras
 go
@@ -237,7 +256,7 @@ select top 5 dime_producto, (sum(cantidad_vendida * precio_unitario) -
     select sum(cantidad_comprada * precio_unitario) from FOR_AND_IF.Hechos_Compras
     join FOR_AND_IF.Dimension_tiempo on dime_tiempo = dime_tiempo_id
     where anio = (select max(anio) from FOR_AND_IF.Dimension_tiempo)
-    and Hechos_compras.dime_producto = Hechos_ventas.dime_producto
+    and Hechos_Compras.dime_producto = Hechos_ventas.dime_producto
 )) / sum(cantidad_vendida * precio_unitario) from FOR_AND_IF.Hechos_Ventas
 join FOR_AND_IF.Dimension_tiempo on dime_tiempo = dime_tiempo_id
 where anio = (select max(anio) from FOR_AND_IF.Dimension_tiempo)
@@ -247,7 +266,7 @@ order by (sum(cantidad_vendida * precio_unitario) -
     select sum(cantidad_comprada * precio_unitario) from FOR_AND_IF.Hechos_Compras
     join FOR_AND_IF.Dimension_tiempo on dime_tiempo = dime_tiempo_id
     where anio = (select max(anio) from FOR_AND_IF.Dimension_tiempo)
-    and Hechos_compras.dime_producto = Hechos_ventas.dime_producto
+    and Hechos_Compras.dime_producto = Hechos_ventas.dime_producto
 )) / sum(cantidad_vendida * precio_unitario) desc
 GO
 
@@ -275,6 +294,24 @@ GO
 -- canal de venta, por mes. Se entiende por tipo de descuento como los 
 -- correspondientes a envío, medio de pago, cupones, etc) 
 
+
+
+-- Aumento promedio de precios de cada proveedor anual. Para calcular este 
+-- indicador se debe tomar como referencia el máximo precio por año menos 
+-- el mínimo todo esto divido el mínimo precio del año. Teniendo en cuenta 
+-- que los precios siempre van en aumento. 
+create view FOR_AND_IF.aumento_promedio_por_proveedor_por_anio (anio, proveedor, aumento) as
+select anio, dime_proveedor, avg(aumento)
+from (
+    select anio, dime_proveedor, dime_producto,
+    (max(precio_unitario)-min(precio_unitario)) / min(precio_unitario) as aumento
+    from FOR_AND_IF.Hechos_Compras
+    join FOR_AND_IF.Dimension_tiempo on dime_tiempo = dime_tiempo_id
+    group by anio, dime_proveedor, dime_producto
+)
+as aux
+group by anio, dime_proveedor
+go
 
 -- Los 3 productos con mayor cantidad de reposición por mes. 
 create view FOR_AND_IF.top_3_productos_mas_repuestos_por_mes (anio, mes, producto) as
