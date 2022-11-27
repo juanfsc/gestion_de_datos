@@ -330,4 +330,5 @@ go
 
 select * from FOR_AND_IF.Top_5_productos_ultimo_anio 
 select * from FOR_AND_IF.Top_5_categorias_mas_vendidad_por_rango_etario_por_mes
+select * from FOR_AND_IF.aumento_promedio_por_proveedor_por_anio
 select * from FOR_AND_IF.top_3_productos_mas_repuestos_por_mes

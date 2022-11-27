@@ -75,6 +75,8 @@ drop proc FOR_AND_IF.migrar_hechos_compras
 drop function FOR_AND_IF.obtener_id_tiempo
 drop view FOR_AND_IF.Top_5_productos_ultimo_anio
 drop view FOR_AND_IF.Top_5_categorias_mas_vendidad_por_rango_etario_por_mes
+drop view FOR_AND_IF.top_3_productos_mas_repuestos_por_mes
+drop view FOR_AND_IF.aumento_promedio_por_proveedor_por_anio
 go
 
 drop schema FOR_AND_IF
