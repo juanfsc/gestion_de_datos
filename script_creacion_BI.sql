@@ -57,7 +57,8 @@ create table FOR_AND_IF.Hechos_Ventas (
     dime_medio_pago decimal(18, 0) not null,
     -- dime_desc decimal(18, 0) not null,
     cantidad_vendida decimal(18, 0) not null,
-    precio_unitario decimal(18, 2) not null
+    precio_unitario decimal(18, 2) not null,
+    costo_asoc_prop decimal(18, 6) not null
 )
 
 create table FOR_AND_IF.Hechos_Compras (
@@ -228,16 +229,22 @@ go
 
 create proc FOR_AND_IF.migrar_hechos_ventas as
 begin
-    insert FOR_AND_IF.Hechos_Ventas (dime_tiempo, dime_canal, dime_producto, dime_rango_etario, dime_medio_pago, cantidad_vendida, precio_unitario) (
-        select FOR_AND_IF.obtener_id_tiempo(vent_fecha), vent_canal, prod_codigo, FOR_AND_IF.obtener_rango_etario_id(clie_fecha_nac), 
-        vent_medio_pago,
-        sum(prod_cantidad),
-        sum(prod_cantidad * prod_precio_unitario)/sum(prod_cantidad)
-        from FOR_AND_IF.Venta join FOR_AND_IF.Venta_por_producto
-        on FOR_AND_IF.Venta.vent_codigo=FOR_AND_IF.Venta_por_producto.vent_codigo
-		join FOR_AND_IF.Cliente on vent_cliente=clie_id
+    insert FOR_AND_IF.Hechos_Ventas (dime_tiempo, dime_canal, dime_producto, dime_rango_etario, dime_medio_pago, cantidad_vendida, precio_unitario, costo_asoc_prop) (
+        select FOR_AND_IF.obtener_id_tiempo(vent_fecha), vent_canal, prod_codigo,
+        FOR_AND_IF.obtener_rango_etario_id(clie_fecha_nac), 
+        vent_medio_pago, sum(prod_cantidad),
+        sum(prod_cantidad * prod_precio_unitario)/sum(prod_cantidad),
+        (select sum(vent_canal_costo) from FOR_AND_IF.Venta) *
+		(sum(prod_cantidad) / (
+            select sum(prod_cantidad) from FOR_AND_IF.Venta v2
+            join FOR_AND_IF.Venta_por_producto vp2 on v2.vent_codigo = vp2.vent_codigo
+        ))
+        from FOR_AND_IF.Venta v1
+        join FOR_AND_IF.Venta_por_producto vp1 on v1.vent_codigo = vp1.vent_codigo
+		join FOR_AND_IF.Cliente c1 on vent_cliente = clie_id
         group by FOR_AND_IF.obtener_id_tiempo(vent_fecha), vent_canal,
-        FOR_AND_IF.obtener_rango_etario_id(clie_fecha_nac), vent_medio_pago, prod_codigo
+        FOR_AND_IF.obtener_rango_etario_id(clie_fecha_nac),
+        vent_medio_pago, prod_codigo, vent_canal_costo
     )
 end
 go
@@ -288,7 +295,7 @@ select anio, mes, dime_canal,
 ) - (
 	select sum(cantidad_comprada * precio_unitario) from FOR_AND_IF.Hechos_Compras
 	where dime_tiempo = dime_tiempo_id
-)) / 100
+)) / 100 - sum(costo_asoc_prop)
 from FOR_AND_IF.Hechos_Ventas
 join FOR_AND_IF.Dimension_tiempo t1 on dime_tiempo = dime_tiempo_id
 group by dime_tiempo_id, anio, mes, dime_canal
@@ -325,13 +332,13 @@ GO
 -- Total de Ingresos por cada medio de pago por mes, descontando los costos 
 -- por medio de pago (en caso que aplique) y descuentos por medio de pago 
 -- (en caso que aplique) 
-create view FOR_AND_IF.total_ingreso_por_medio_pago_por_mes () as
-select mes, sum(cantidad_vendida*precio_unitario)*(1 - porcentaje_descuento)-sum(costo)
-from FOR_AND_IF.Hechos_Ventas join FOR_AND_IF.Dimension_medio_de_pago
-on dime_medio_pago=dime_medio_de_pago_id
-join FOR_AND_IF.Dimension_tiempo on dime_tiempo=dime_tiempo_id
-group by mes, porcentaje_descuento
-GO
+-- create view FOR_AND_IF.total_ingreso_por_medio_pago_por_mes () as
+-- select mes, sum(cantidad_vendida*precio_unitario)*(1 - porcentaje_descuento)-sum(costo)
+-- from FOR_AND_IF.Hechos_Ventas join FOR_AND_IF.Dimension_medio_de_pago
+-- on dime_medio_pago=dime_medio_de_pago_id
+-- join FOR_AND_IF.Dimension_tiempo on dime_tiempo=dime_tiempo_id
+-- group by mes, porcentaje_descuento
+-- GO
 
 
 -- Importe total en descuentos aplicados según su tipo de descuento, por 
