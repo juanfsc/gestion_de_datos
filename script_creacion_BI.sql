@@ -300,17 +300,21 @@ GO
 -- indicador se debe tomar como referencia el máximo precio por año menos 
 -- el mínimo todo esto divido el mínimo precio del año. Teniendo en cuenta 
 -- que los precios siempre van en aumento. 
-create view FOR_AND_IF.aumento_promedio_por_proveedor_por_anio (anio, proveedor, aumento) as
-select anio, dime_proveedor, avg(aumento)
-from (
+
+-- AUXILIAR
+create view FOR_AND_IF.aumento_por_proveedor_por_anio_por_producto (anio, proveedor, producto, aumento) as
     select anio, dime_proveedor, dime_producto,
     (max(precio_unitario)-min(precio_unitario)) / min(precio_unitario) as aumento
     from FOR_AND_IF.Hechos_Compras
     join FOR_AND_IF.Dimension_tiempo on dime_tiempo = dime_tiempo_id
     group by anio, dime_proveedor, dime_producto
-)
-as aux
-group by anio, dime_proveedor
+go
+
+create view FOR_AND_IF.aumento_promedio_por_proveedor_por_anio (anio, proveedor, aumento)
+as
+    select anio, proveedor, avg(aumento)
+    from FOR_AND_IF.aumento_por_proveedor_por_anio_por_producto
+    group by anio, proveedor
 go
 
 -- Los 3 productos con mayor cantidad de reposición por mes. 
