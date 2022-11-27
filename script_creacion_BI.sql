@@ -276,7 +276,21 @@ GO
 -- correspondientes a envío, medio de pago, cupones, etc) 
 
 
+-- Los 3 productos con mayor cantidad de reposición por mes. 
+create view FOR_AND_IF.top_3_productos_mas_repuestos_por_mes (anio, mes, producto) as
+select anio, mes, dime_producto from FOR_AND_IF.Hechos_Compras
+join FOR_AND_IF.Dimension_tiempo on dime_tiempo = dime_tiempo_id
+where dime_producto in (
+    select top 3 dime_producto from FOR_AND_IF.Hechos_Compras
+    where dime_tiempo = dime_tiempo_id
+    group by dime_producto
+    order by sum(cantidad_comprada) desc
+)
+group by anio, mes, dime_producto
+go
+
 --Ejecucion VIEWS
 
 select * from FOR_AND_IF.Top_5_productos_ultimo_anio 
-select * from FOR_AND_IF.Top_5_categorias_mas_vendidad_por_rango_etario_por_mes 
+select * from FOR_AND_IF.Top_5_categorias_mas_vendidad_por_rango_etario_por_mes
+select * from FOR_AND_IF.top_3_productos_mas_repuestos_por_mes
