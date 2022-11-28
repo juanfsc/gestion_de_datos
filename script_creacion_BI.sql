@@ -398,14 +398,22 @@ GO
 
 -- Total de Ingresos por cada medio de pago por mes, descontando los costos 
 -- por medio de pago (en caso que aplique) y descuentos por medio de pago 
--- (en caso que aplique) 
--- create view FOR_AND_IF.total_ingreso_por_medio_pago_por_mes () as
--- select mes, sum(cantidad_vendida*precio_unitario)*(1 - porcentaje_descuento)-sum(costo)
--- from FOR_AND_IF.Hechos_Ventas join FOR_AND_IF.Dimension_medio_de_pago
--- on dime_medio_pago=dime_medio_de_pago_id
--- join FOR_AND_IF.Dimension_tiempo on dime_tiempo=dime_tiempo_id
--- group by mes, porcentaje_descuento
--- GO
+-- (en caso que aplique)
+
+create view FOR_AND_IF.ingresos_por_medio_de_pago_por_mes (medio_pago, anio, mes, ingreso) as
+select v.dime_medio_pago, anio, mes,
+sum(cantidad_vendida*precio_unitario) - (
+    select isnull(sum(suma_descontada), 0) from FOR_AND_IF.Hechos_Descuentos d
+    where v.dime_medio_pago = d.dime_medio_pago
+    and v.dime_tiempo = d.dime_tiempo
+) 
+-- - (
+--     select costo from FOR_AND_IF.dimension_medio_de_pago where dime_medio_pago_id=dime_medio_pago
+-- ) CORREGIR
+from FOR_AND_IF.Hechos_Ventas v
+join FOR_AND_IF.Dimension_tiempo t on v.dime_tiempo = dime_tiempo_id
+group by v.dime_medio_pago, dime_tiempo, anio, mes
+go
 
 -- Importe total en descuentos aplicados según su tipo de descuento, por 
 -- canal de venta, por mes. Se entiende por tipo de descuento como los 
@@ -439,6 +447,7 @@ as
 go
 
 -- Los 3 productos con mayor cantidad de reposición por mes. 
+
 create view FOR_AND_IF.top_3_productos_mas_repuestos_por_mes (anio, mes, producto) as
 select anio, mes, dime_producto from FOR_AND_IF.Hechos_Compras
 join FOR_AND_IF.Dimension_tiempo on dime_tiempo = dime_tiempo_id
@@ -452,7 +461,7 @@ group by anio, mes, dime_producto
 go
 
 -- Porcentaje de envíos realizados a cada Provincia por mes. El porcentaje
--- deb  e representar la cantidad de envíos realizados a cada provincia sobre
+-- debe representar la cantidad de envíos realizados a cada provincia sobre
 -- total de envío mensuales.
 
 -- Valor promedio de envío por Provincia por Medio De Envío anual.
