@@ -140,6 +140,19 @@ begin
 end
 go
 
+create function FOR_AND_IF.costo_por_unidad(@venta decimal(19, 0))
+returns decimal(18, 2)
+as
+begin
+    return (
+        select vent_canal_costo / sum(prod_cantidad) from FOR_AND_IF.Venta
+        join FOR_AND_IF.Venta_por_producto on Venta.vent_codigo = Venta_por_producto.vent_codigo
+        where Venta.vent_codigo = @venta
+        group by vent_canal_costo
+    )
+end
+go
+
 -- DEFINICIÓN PROCEDURES
 
 create proc FOR_AND_IF.migrar_dimension_tiempo as
@@ -234,14 +247,10 @@ begin
         FOR_AND_IF.obtener_rango_etario_id(clie_fecha_nac), 
         vent_medio_pago, sum(prod_cantidad),
         sum(prod_cantidad * prod_precio_unitario)/sum(prod_cantidad),
-        (select sum(vent_canal_costo) from FOR_AND_IF.Venta) *
-		(sum(prod_cantidad) / (
-            select sum(prod_cantidad) from FOR_AND_IF.Venta v2
-            join FOR_AND_IF.Venta_por_producto vp2 on v2.vent_codigo = vp2.vent_codigo
-        ))
-        from FOR_AND_IF.Venta v1
-        join FOR_AND_IF.Venta_por_producto vp1 on v1.vent_codigo = vp1.vent_codigo
-		join FOR_AND_IF.Cliente c1 on vent_cliente = clie_id
+        sum(prod_cantidad * FOR_AND_IF.costo_por_unidad(Venta.vent_codigo))
+        from FOR_AND_IF.Venta
+        join FOR_AND_IF.Venta_por_producto on Venta.vent_codigo = Venta_por_producto.vent_codigo
+		join FOR_AND_IF.Cliente on vent_cliente = clie_id
         group by FOR_AND_IF.obtener_id_tiempo(vent_fecha), vent_canal,
         FOR_AND_IF.obtener_rango_etario_id(clie_fecha_nac),
         vent_medio_pago, prod_codigo, vent_canal_costo

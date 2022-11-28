@@ -56,39 +56,4 @@ drop function FOR_AND_IF.suma_importe_descuento
 drop function FOR_AND_IF.porcentaje_medio_pago
 drop function FOR_AND_IF.porcentaje_descuento
 go
-
---BI
-drop table FOR_AND_IF.Hechos_Compras
-drop table FOR_AND_IF.Hechos_Ventas
--- drop table FOR_AND_IF.Dimension_descuento
-drop table FOR_AND_IF.Dimension_tiempo
-drop table FOR_AND_IF.Dimension_canal
-drop table FOR_AND_IF.Dimension_medio_de_pago
-drop table FOR_AND_IF.Dimension_provincia
-drop table FOR_AND_IF.Dimension_producto
-drop table FOR_AND_IF.Dimension_proveedor
-drop table FOR_AND_IF.Dimension_cliente_rango_etario
-drop proc FOR_AND_IF.migrar_dimension_tiempo
-drop proc FOR_AND_IF.migrar_dimension_medio_pago
-drop proc FOR_AND_IF.migrar_dimension_canal
-drop proc FOR_AND_IF.migrar_dimension_provincia
-drop proc FOR_AND_IF.migrar_dimension_producto
-drop proc FOR_AND_IF.migrar_dimension_cliente_rango_etario
-drop proc FOR_AND_IF.migrar_dimension_proveedor
--- drop proc FOR_AND_IF.migrar_dimension_descuento
-drop proc FOR_AND_IF.migrar_hechos_ventas
-drop proc FOR_AND_IF.migrar_hechos_compras
-drop function FOR_AND_IF.obtener_id_tiempo
-drop function FOR_AND_IF.obtener_rango_etario
-drop function FOR_AND_IF.obtener_rango_etario_id
-drop view FOR_AND_IF.ganancia_mensual_de_canal_de_venta
-drop view FOR_AND_IF.Top_5_productos_ultimo_anio
-drop view FOR_AND_IF.Top_5_categorias_mas_vendidad_por_rango_etario_por_mes
-drop view FOR_AND_IF.top_3_productos_mas_repuestos_por_mes
-drop view FOR_AND_IF.aumento_por_proveedor_por_anio_por_producto
-drop view FOR_AND_IF.aumento_promedio_por_proveedor_por_anio
-go
-
 drop schema FOR_AND_IF
-
-go
