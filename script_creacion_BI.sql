@@ -42,12 +42,17 @@ create table FOR_AND_IF.Dimension_medio_de_pago (
     porcentaje_descuento decimal(18,2) not null -- Lo dejamos o no hace falta tenerlo??
 )
 
--- create table FOR_AND_IF.Dimension_descuento (
---     dime_desc_id decimal(18, 0) not null identity(1, 1),
---     importe_desc decimal(18, 2) not null,
---     tipo_desc nvarchar(255) not null,
---     vent_desc decimal(19, 0) not null
--- )
+create table FOR_AND_IF.Dimension_tipo_envio (
+    dime_medio_de_pago_id decimal(18,0) not null,
+    nombre nvarchar(255) not null,
+    costo decimal(18,2) not null,
+    porcentaje_descuento decimal(18,2) not null -- Lo dejamos o no hace falta tenerlo??
+)
+
+create table FOR_AND_IF.Dimension_descuento (
+    dime_desc_id decimal(18, 0) not null identity(1, 1),
+    tipo_desc nvarchar(255) not null,
+)
 
 create table FOR_AND_IF.Hechos_Ventas (
     dime_tiempo decimal(18, 0) not null,
@@ -55,7 +60,6 @@ create table FOR_AND_IF.Hechos_Ventas (
     dime_producto nvarchar(50) not null,
 	dime_rango_etario decimal(18, 0) not null,
     dime_medio_pago decimal(18, 0) not null,
-    -- dime_desc decimal(18, 0) not null,
     cantidad_vendida decimal(18, 0) not null,
     precio_unitario decimal(18, 2) not null,
     costo_asoc_prop decimal(18, 6) not null
@@ -69,6 +73,15 @@ create table FOR_AND_IF.Hechos_Compras (
     precio_unitario decimal(18, 2) not null
 )
 
+create table FOR_AND_IF.Hechos_Descuentos (
+    dime_tiempo decimal(18, 0) not null,
+    dime_canal decimal(18, 0) not null,
+	dime_rango_etario decimal(18, 0) not null,
+    dime_medio_pago decimal(18, 0) not null,
+    dime_desc decimal(18, 0) not null,
+    suma_descontada decimal(18, 2) not null
+)
+
 -- PRIMARY KEYS
 
 alter table FOR_AND_IF.Dimension_tiempo add constraint pk_dimension_tiempo primary key (dime_tiempo_id)
@@ -77,10 +90,11 @@ alter table FOR_AND_IF.Dimension_provincia add constraint pk_dimension_provincia
 alter table FOR_AND_IF.Dimension_producto add constraint pk_dimension_producto primary key (dime_producto_id)
 alter table FOR_AND_IF.Dimension_cliente_rango_etario add constraint pk_dimension_cliente_rango_etario primary key (dime_cliente_rango_id)
 alter table FOR_AND_IF.Dimension_medio_de_pago add constraint pk_dimension_medio_de_pago primary key (dime_medio_de_pago_id)
--- alter table FOR_AND_IF.Dimension_descuento add constraint pk_dimension_descuento primary key (dime_desc_id)
 alter table FOR_AND_IF.Dimension_proveedor add constraint pk_dimension_proveedor primary key (dime_proveedor_id)
-alter table FOR_AND_IF.Hechos_Ventas add constraint pk_hechos_ventas primary key (dime_tiempo, dime_canal, dime_producto, dime_rango_etario, dime_medio_pago/*, dime_desc*/)
+alter table FOR_AND_IF.Dimension_descuento add constraint pk_dimension_descuento primary key (dime_desc_id)
+alter table FOR_AND_IF.Hechos_Ventas add constraint pk_hechos_ventas primary key (dime_tiempo, dime_canal, dime_producto, dime_rango_etario, dime_medio_pago)
 alter table FOR_AND_IF.Hechos_Compras add constraint pk_hechos_compras primary key (dime_tiempo, dime_producto, dime_proveedor)
+alter table FOR_AND_IF.Hechos_Descuentos add constraint pk_hechos_descuentos primary key (dime_tiempo, dime_canal, dime_rango_etario, dime_medio_pago, dime_desc)
 go
 
 -- FOREIGN KEYS
@@ -95,8 +109,6 @@ alter table FOR_AND_IF.Hechos_Ventas add constraint fk_hechos_ventas_dimension_r
     references FOR_AND_IF.Dimension_cliente_rango_etario (dime_cliente_rango_id)
 alter table FOR_AND_IF.Hechos_Ventas add constraint fk_hechos_ventas_dimension_medio_pago foreign key (dime_medio_pago)
     references FOR_AND_IF.Dimension_medio_de_pago (dime_medio_de_pago_id)
--- alter table FOR_AND_IF.Hechos_Ventas add constraint fk_hechos_ventas_dimension_descuento foreign key (dime_desc)
---     references FOR_AND_IF.Dimension_descuento (dime_desc_id)
 
 alter table FOR_AND_IF.Hechos_Compras add constraint fk_hechos_compras_dimension_tiempo foreign key (dime_tiempo)
     references FOR_AND_IF.Dimension_tiempo (dime_tiempo_id)
@@ -104,6 +116,11 @@ alter table FOR_AND_IF.Hechos_Compras add constraint fk_hechos_compras_dimension
     references FOR_AND_IF.Dimension_producto (dime_producto_id)
 alter table FOR_AND_IF.Hechos_Compras add constraint fk_hechos_compras_dimension_proveedor foreign key (dime_proveedor)
     references FOR_AND_IF.Dimension_proveedor (dime_proveedor_id)
+
+alter table FOR_AND_IF.Hechos_Descuentos add constraint fk_hechos_descuentos_dimension_descuento foreign key (dime_desc)
+    references FOR_AND_IF.Dimension_descuento (dime_desc_id)
+alter table FOR_AND_IF.Hechos_Descuentos add constraint fk_hechos_descuentos_hechos_ventas foreign key (dime_tiempo, dime_canal, dime_rango_etario, dime_medio_pago)
+    references FOR_AND_IF.Hechos_Ventas (dime_tiempo, dime_canal, dime_rango_etario, dime_medio_pago)
 go
 
 -- DEFINICIÓN FUNCIONES
@@ -211,26 +228,16 @@ begin
 end
 go
 
--- create proc FOR_AND_IF.migrar_dimension_descuento as
--- begin
---     insert FOR_AND_IF.Dimension_descuento (importe_desc, tipo_desc, vent_desc) (
---         select sum(cupo_importe), 'Cupón', vent_codigo from FOR_AND_IF.Cupon_por_venta 
---         group by vent_codigo
---     )
---     insert FOR_AND_IF.Dimension_descuento (importe_desc, tipo_desc, vent_desc) (
---         select sum(desc_importe), 'Especial', vent_codigo from FOR_AND_IF.Descuento_especial
---         group by vent_codigo
---     )
---     insert FOR_AND_IF.Dimension_descuento (importe_desc, tipo_desc, vent_desc) (
---         select sum(prod_cantidad * prod_precio_unitario) * medi_porcentaje_descuento, medi_pago, Venta.vent_codigo
---         from FOR_AND_IF.Medio_Pago
---         join FOR_AND_IF.Venta on vent_medio_pago = medi_id
---         join FOR_AND_IF.Venta_por_producto on Venta.vent_codigo = Venta_por_producto.vent_codigo
---         where medi_porcentaje_descuento <> 0
---         group by Venta.vent_codigo, medi_pago, medi_porcentaje_descuento
---     )
--- end
--- go
+create proc FOR_AND_IF.migrar_dimension_descuento as
+begin
+    insert FOR_AND_IF.Dimension_descuento (tipo_desc) values ('Cupón')
+    insert FOR_AND_IF.Dimension_descuento (tipo_desc) values ('Especial')
+    insert FOR_AND_IF.Dimension_descuento (tipo_desc) (
+        select medi_pago from FOR_AND_IF.Medio_Pago
+        where medi_porcentaje_descuento > 0
+    )
+end
+go
 
 create proc FOR_AND_IF.migrar_dimension_proveedor as
 begin
@@ -271,6 +278,56 @@ begin
 end
 go
 
+create proc FOR_AND_IF.migrar_hechos_descuentos as
+begin
+    insert FOR_AND_IF.Hechos_Descuentos (dime_tiempo, dime_rango_etario, dime_canal, dime_medio_pago, dime_desc, suma_descontada) (
+        select FOR_AND_IF.obtener_id_tiempo(vent_fecha), 
+        FOR_AND_IF.obtener_rango_etario_id(clie_fecha_nac),
+        vent_canal,
+        vent_medio_pago,
+        (select dime_desc_id from FOR_AND_IF.Dimension_descuento where tipo_desc = 'Cupón'),
+        sum(cupo_importe)
+        from FOR_AND_IF.Venta
+		join FOR_AND_IF.Cliente on vent_cliente = clie_id
+        join FOR_AND_IF.Cupon_por_venta on Venta.vent_codigo = Cupon_por_venta.vent_codigo
+        group by FOR_AND_IF.obtener_id_tiempo(vent_fecha), 
+        FOR_AND_IF.obtener_rango_etario_id(clie_fecha_nac),
+        vent_canal,
+        vent_medio_pago
+    )
+    insert FOR_AND_IF.Hechos_Descuentos (dime_tiempo, dime_rango_etario, dime_canal, dime_medio_pago, dime_desc, suma_descontada) (
+        select FOR_AND_IF.obtener_id_tiempo(vent_fecha), 
+        FOR_AND_IF.obtener_rango_etario_id(clie_fecha_nac),
+        vent_canal,
+        vent_medio_pago,
+        (select dime_desc_id from FOR_AND_IF.Dimension_descuento where tipo_desc = 'Especial'),
+        sum(desc_importe)
+        from FOR_AND_IF.Venta
+		join FOR_AND_IF.Cliente on vent_cliente = clie_id
+        join FOR_AND_IF.Descuento_especial on Venta.vent_codigo = Descuento_especial.vent_codigo
+        group by FOR_AND_IF.obtener_id_tiempo(vent_fecha), vent_canal,
+        FOR_AND_IF.obtener_rango_etario_id(clie_fecha_nac),
+        vent_medio_pago
+    )
+    insert FOR_AND_IF.Hechos_Descuentos (dime_tiempo, dime_rango_etario, dime_canal, dime_medio_pago, dime_desc, suma_descontada) (
+        select FOR_AND_IF.obtener_id_tiempo(vent_fecha), 
+        FOR_AND_IF.obtener_rango_etario_id(clie_fecha_nac),
+        vent_canal,
+        vent_medio_pago,
+        (select dime_desc_id from FOR_AND_IF.Dimension_descuento where tipo_desc = medi_pago),
+        sum(prod_precio_unitario*prod_cantidad)*medi_porcentaje_descuento
+        from FOR_AND_IF.Venta
+		join FOR_AND_IF.Cliente on vent_cliente = clie_id
+        join FOR_AND_IF.Medio_Pago on vent_medio_pago = medi_id
+        join FOR_AND_IF.Venta_por_producto on Venta.vent_codigo = Venta_por_producto.vent_codigo
+        group by FOR_AND_IF.obtener_id_tiempo(vent_fecha), vent_canal,
+        FOR_AND_IF.obtener_rango_etario_id(clie_fecha_nac),
+        vent_medio_pago, medi_pago, medi_porcentaje_descuento
+        having medi_porcentaje_descuento > 0
+    )
+end
+go
+
 -- EJECUCIÓN PROCEDURES
 
 exec FOR_AND_IF.migrar_dimension_tiempo
@@ -279,10 +336,11 @@ exec FOR_AND_IF.migrar_dimension_medio_pago
 exec FOR_AND_IF.migrar_dimension_provincia
 exec FOR_AND_IF.migrar_dimension_producto
 exec FOR_AND_IF.migrar_dimension_cliente_rango_etario
--- exec FOR_AND_IF.migrar_dimension_descuento
+exec FOR_AND_IF.migrar_dimension_descuento
 exec FOR_AND_IF.migrar_dimension_proveedor
 exec FOR_AND_IF.migrar_hechos_ventas
 exec FOR_AND_IF.migrar_hechos_compras
+exec FOR_AND_IF.migrar_hechos_descuentos
 go
 
 -- DEFINICIÓN VIEWS
@@ -349,12 +407,15 @@ GO
 -- group by mes, porcentaje_descuento
 -- GO
 
-
 -- Importe total en descuentos aplicados según su tipo de descuento, por 
 -- canal de venta, por mes. Se entiende por tipo de descuento como los 
 -- correspondientes a envío, medio de pago, cupones, etc) 
 
-
+create view FOR_AND_IF.descuentos_por_canal_por_mes (tipo, canal, anio, mes, importe) as
+    select dime_desc, dime_canal, anio, mes, sum(suma_descontada) from FOR_AND_IF.Hechos_Descuentos
+    join FOR_AND_IF.Dimension_tiempo on dime_tiempo = dime_tiempo_id
+    group by dime_desc, dime_canal, anio, mes
+go
 
 -- Aumento promedio de precios de cada proveedor anual. Para calcular este 
 -- indicador se debe tomar como referencia el máximo precio por año menos 
@@ -390,10 +451,17 @@ where dime_producto in (
 group by anio, mes, dime_producto
 go
 
+-- Porcentaje de envíos realizados a cada Provincia por mes. El porcentaje
+-- deb  e representar la cantidad de envíos realizados a cada provincia sobre
+-- total de envío mensuales.
+
+-- Valor promedio de envío por Provincia por Medio De Envío anual.
+
 -- CONSULTA VIEWS
 
 select * from FOR_AND_IF.ganancia_mensual_de_canal_de_venta
 select * from FOR_AND_IF.Top_5_productos_ultimo_anio 
 select * from FOR_AND_IF.Top_5_categorias_mas_vendidad_por_rango_etario_por_mes
+select * from FOR_AND_IF.descuentos_por_canal_por_mes
 select * from FOR_AND_IF.aumento_promedio_por_proveedor_por_anio
 select * from FOR_AND_IF.top_3_productos_mas_repuestos_por_mes

@@ -1,6 +1,7 @@
 drop table FOR_AND_IF.Hechos_Compras
 drop table FOR_AND_IF.Hechos_Ventas
--- drop table FOR_AND_IF.Dimension_descuento
+drop table FOR_AND_IF.Hechos_Descuentos
+drop table FOR_AND_IF.Dimension_descuento
 drop table FOR_AND_IF.Dimension_tiempo
 drop table FOR_AND_IF.Dimension_canal
 drop table FOR_AND_IF.Dimension_medio_de_pago
@@ -8,6 +9,8 @@ drop table FOR_AND_IF.Dimension_provincia
 drop table FOR_AND_IF.Dimension_producto
 drop table FOR_AND_IF.Dimension_proveedor
 drop table FOR_AND_IF.Dimension_cliente_rango_etario
+drop table FOR_AND_IF.Dimension_descuento
+drop table FOR_AND_IF.Dimension_tipo_envio
 drop proc FOR_AND_IF.migrar_dimension_tiempo
 drop proc FOR_AND_IF.migrar_dimension_medio_pago
 drop proc FOR_AND_IF.migrar_dimension_canal
@@ -15,7 +18,7 @@ drop proc FOR_AND_IF.migrar_dimension_provincia
 drop proc FOR_AND_IF.migrar_dimension_producto
 drop proc FOR_AND_IF.migrar_dimension_cliente_rango_etario
 drop proc FOR_AND_IF.migrar_dimension_proveedor
--- drop proc FOR_AND_IF.migrar_dimension_descuento
+drop proc FOR_AND_IF.migrar_dimension_descuento
 drop proc FOR_AND_IF.migrar_hechos_ventas
 drop proc FOR_AND_IF.migrar_hechos_compras
 drop function FOR_AND_IF.obtener_id_tiempo
