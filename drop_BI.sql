@@ -19,12 +19,14 @@ drop proc FOR_AND_IF.migrar_dimension_producto
 drop proc FOR_AND_IF.migrar_dimension_cliente_rango_etario
 drop proc FOR_AND_IF.migrar_dimension_proveedor
 drop proc FOR_AND_IF.migrar_dimension_descuento
+drop proc FOR_AND_IF.migrar_hechos_descuentos
 drop proc FOR_AND_IF.migrar_hechos_ventas
 drop proc FOR_AND_IF.migrar_hechos_compras
 drop function FOR_AND_IF.obtener_id_tiempo
 drop function FOR_AND_IF.obtener_rango_etario
 drop function FOR_AND_IF.obtener_rango_etario_id
-drop function FOR_AND_IF.costo_por_unidad
+drop function FOR_AND_IF.costo_medio_pago_por_unidad
+drop function FOR_AND_IF.costo_canal_por_unidad
 drop view FOR_AND_IF.ganancia_mensual_de_canal_de_venta
 drop view FOR_AND_IF.Top_5_productos_ultimo_anio
 drop view FOR_AND_IF.Top_5_categorias_mas_vendidad_por_rango_etario_por_mes
