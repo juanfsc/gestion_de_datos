@@ -151,8 +151,6 @@ alter table FOR_AND_IF.Hechos_Descuentos add constraint fk_hechos_descuentos_dim
     references FOR_AND_IF.Dimension_cliente_rango_etario(dime_cliente_rango_id)
 alter table FOR_AND_IF.Hechos_Descuentos add constraint fk_hechos_descuentos_dimension_canal foreign key (dime_canal)
     references FOR_AND_IF.Dimension_canal(dime_canal_id)
-alter table FOR_AND_IF.Hechos_Descuentos add constraint fk_hechos_descuentos_dimension_tipo_envio foreign key (dime_tipo_envio)
-    references FOR_AND_IF.Dimension_tipo_envio(dime_tipo_envio_id)
 
 alter table FOR_AND_IF.Hechos_Envios add constraint fk_hechos_envios_dimension_tipo_envio foreign key (dime_tipo_envio)
     references FOR_AND_IF.Dimension_tipo_envio (dime_tipo_envio_id)
@@ -233,7 +231,6 @@ go
 
 create proc FOR_AND_IF.migrar_dimension_tiempo as
 begin
-    if (select count(*) from FOR_AND_IF.Dimension_tiempo) = 0
     begin
         insert FOR_AND_IF.Dimension_tiempo (anio, mes) (
             select distinct YEAR(vent_fecha), MONTH(vent_fecha) from FOR_AND_IF.Venta
@@ -591,6 +588,7 @@ group by dime_tiempo, anio, mes, dime_provincia
 go
 
 -- Valor promedio de envío por Provincia por Medio De Envío anual.
+
 create view FOR_AND_IF.valor_promedio_envio_por_provincia_por_medio_de_envio_por_año
 (promedio, provincia, medio_envio, anio)
 as
@@ -607,7 +605,7 @@ go
 -- CONSULTA VIEWS
 
 select * from FOR_AND_IF.ganancia_mensual_de_canal_de_venta
-select * from FOR_AND_IF.Top_5_productos_ultimo_anio 
+select * from FOR_AND_IF.Top_5_productos_ultimo_anio
 select * from FOR_AND_IF.Top_5_categorias_mas_vendidas_por_rango_etario_por_mes
 select * from FOR_AND_IF.ingresos_por_medio_de_pago_por_mes
 select * from FOR_AND_IF.descuentos_por_canal_por_mes
