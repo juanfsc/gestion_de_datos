@@ -184,10 +184,10 @@ create function FOR_AND_IF.obtener_rango_etario(@fecha date) returns char(8) as
 begin
     return (
 		case
-			when year(GETDATE())-year(@fecha) <= 25 then 'joven' 
-			when year(GETDATE())-year(@fecha) > 25 and year(GETDATE())-year(@fecha) <= 35 then 'adulto' 
-			when year(GETDATE())-year(@fecha) > 35 and year(GETDATE())-year(@fecha) <= 55 then 'abuelo' 
-			when year(GETDATE())-year(@fecha) > 55 then 'jubilado'
+			when year(GETDATE())-year(@fecha) <= 25 then '<=25' 
+			when year(GETDATE())-year(@fecha) > 25 and year(GETDATE())-year(@fecha) <= 35 then '25-35' 
+			when year(GETDATE())-year(@fecha) > 35 and year(GETDATE())-year(@fecha) <= 55 then '35-55' 
+			when year(GETDATE())-year(@fecha) > 55 then '>55'
 		end
     )
 end
